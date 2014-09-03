@@ -97,6 +97,32 @@ func (c *Client) create(name string) (*Result, error) {
   return result, nil
 }
 
+/**
+ * Delete single database.
+ */
+func (c *Client) delete(name string) (*Result, error) {
+  client := &http.Client{}
+  req, err := http.NewRequest("DELETE", c.Url + name, nil)
+  if err != nil {
+    return nil, err
+  }
+  res, err := client.Do(req)
+  if err != nil {
+    return nil, err
+  }
+  defer res.Body.Close()
+  body, err := ioutil.ReadAll(res.Body)
+  if err != nil {
+    return nil, err
+  }
+  var result *Result
+  err = json.Unmarshal(body, &result)
+  if err != nil {
+    return nil, err
+  }
+  return result, nil
+}
+
 
 func main() {
 
@@ -126,4 +152,11 @@ func main() {
   }
   fmt.Println(status)
   fmt.Println(status.Ok)
+
+  // delete database
+  status, err = client.delete("awesome")
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(status)
 }
