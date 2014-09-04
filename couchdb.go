@@ -1,127 +1,180 @@
 package main
 
 import (
+  "bytes"
   "fmt"
   "net/http"
   "io/ioutil"
   "log"
   "encoding/json"
+  "io"
+  // "errors"
 )
 
-type CouchDB struct {
+
+
+// STRUCTS
+
+
+
+type Client struct {
+  Url string
+}
+
+// http://docs.couchdb.org/en/latest/intro/api.html#server
+type Server struct {
+  Couchdb string
   Uuid string
+  Vendor struct {
+    Version string
+    Name string
+  }
   Version string
 }
 
 type Database struct {
-  DbName string `json:"db_name"`
+  Url string
+}
+
+type DatabaseInfo struct {
+  Name string `json:"db_name"`
   DocCount int `json:"doc_count"`
   DocDelCount int `json:"doc_del_count"`
 }
 
-type Result struct {
+type DbResponse struct {
   Ok bool
   Error string
   Reason string
 }
 
-type Client struct {
+type DocResponse struct {
+  Ok bool
+  Id string
+  Rev string
+  Error string
+  Reason string
+}
+
+type Error struct {
+  Method string
   Url string
+  StatusCode int
+  Error string
+  Reason string
+}
+
+// CLIENT OPERATIONS
+
+
+
+/**
+ * Get server information.
+ */
+func (c *Client) info() (*Server, error) {
+  body, err := request("GET", c.Url, nil)
+  if err != nil {
+    return nil, err
+  }
+  var server *Server
+  err = json.Unmarshal(body, &server)
+  if err != nil {
+    return nil, err
+  }
+  return server, nil
 }
 
 /**
  * Get all databases.
  */
 func (c *Client) all() ([]string, error) {
-  res, err := http.Get(c.Url + "_all_dbs")
-  if err != nil {
-    return nil, err
-  }
-  defer res.Body.Close()
-  body, err := ioutil.ReadAll(res.Body)
+  body, err := request("GET", c.Url + "_all_dbs", nil)
   if err != nil {
     return nil, err
   }
   var data []string
-  err = json.Unmarshal(body, &data)
-  if err != nil {
-    return nil, err
-  }
-  return data, nil
+  return data, json.Unmarshal(body, &data)
 }
 
 /**
  * Get single database.
  */
-func (c *Client) get(name string) (*Database, error) {
-  res, err := http.Get(c.Url + name)
+func (c *Client) get(name string) (*DatabaseInfo, error) {
+  body, err := request("GET", c.Url + name, nil)
   if err != nil {
     return nil, err
   }
-  defer res.Body.Close()
-  body, err := ioutil.ReadAll(res.Body)
-  if err != nil {
-    return nil, err
-  }
-  var database *Database
-  err = json.Unmarshal(body, &database)
-  if err != nil {
-    return nil, err
-  }
-  return database, nil
+  var dbInfo *DatabaseInfo
+  return dbInfo, json.Unmarshal(body, &dbInfo)
 }
 
 /**
  * Create single database.
  */
-func (c *Client) create(name string) (*Result, error) {
-  client := &http.Client{}
-  req, err := http.NewRequest("PUT", c.Url + name, nil)
+func (c *Client) create(name string) (*DbResponse, error) {
+  body, err := request("PUT", c.Url + name, nil)
   if err != nil {
     return nil, err
   }
-  res, err := client.Do(req)
-  if err != nil {
-    return nil, err
-  }
-  defer res.Body.Close()
-  body, err := ioutil.ReadAll(res.Body)
-  if err != nil {
-    return nil, err
-  }
-  var result *Result
-  err = json.Unmarshal(body, &result)
-  if err != nil {
-    return nil, err
-  }
-  return result, nil
+  var DbResponse *DbResponse
+  return DbResponse, json.Unmarshal(body, &DbResponse)
 }
 
 /**
  * Delete single database.
  */
-func (c *Client) delete(name string) (*Result, error) {
-  client := &http.Client{}
-  req, err := http.NewRequest("DELETE", c.Url + name, nil)
+func (c *Client) delete(name string) (*DbResponse, error) {
+  body, err := request("DELETE", c.Url + name, nil)
   if err != nil {
     return nil, err
   }
-  res, err := client.Do(req)
-  if err != nil {
-    return nil, err
-  }
-  defer res.Body.Close()
-  body, err := ioutil.ReadAll(res.Body)
-  if err != nil {
-    return nil, err
-  }
-  var result *Result
-  err = json.Unmarshal(body, &result)
-  if err != nil {
-    return nil, err
-  }
-  return result, nil
+  var DbResponse *DbResponse
+  return DbResponse, json.Unmarshal(body, &DbResponse)
 }
+
+func (c *Client) use(name string) (Database) {
+  return Database{c.Url + "/" + name + "/"}
+}
+
+
+
+// DATABASE OPERATIONS
+
+
+
+/**
+ * Head request.
+ * http://docs.couchdb.org/en/latest/api/document/common.html#head--db-docid
+ */
+func (db *Database) head(id string) (*http.Response, error) {
+  return http.Head(db.Url + id)
+}
+
+func (db *Database) get(id string) (map[string]interface{}, error) {
+  body, err := request("GET", db.Url + id, nil)
+  if err != nil {
+    return nil, err
+  }
+  var data map[string]interface{}
+  return data, json.Unmarshal(body, &data)
+}
+
+func (db *Database) put(id string, document interface{}) (*DocResponse, error) {
+  data, err := marshal(document)
+  if err != nil {
+    return nil, err
+  }
+  body, err := request("PUT", db.Url + id, data)
+  if err != nil {
+    return nil, err
+  }
+  var res *DocResponse
+  return res, json.Unmarshal(body, &res)
+}
+
+
+// FUNC MAIN
+
 
 
 func main() {
@@ -131,6 +184,13 @@ func main() {
   // create client
   client := &Client{url}
 
+  // get server info
+  couch, err := client.info()
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(couch.Vendor.Version)
+
   // get all dbs
   res, err := client.all()
   if err != nil {
@@ -138,25 +198,119 @@ func main() {
   }
   fmt.Println(res)
 
-  // get dbs
-  db, err := client.get("_users")
+  // get db information
+  info, err := client.get("nice")
   if err != nil {
     log.Fatal(err)
   }
-  fmt.Println(db)
+  fmt.Println(info)
 
-  // create db
-  status, err := client.create("awesome")
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println(status)
-  fmt.Println(status.Ok)
+  // use db
+  db := client.use("nice")
 
-  // delete database
-  status, err = client.delete("awesome")
+  // get document head
+  head, err := db.head("awesome")
   if err != nil {
     log.Fatal(err)
   }
-  fmt.Println(status)
+  fmt.Println(head.StatusCode)
+
+  // get document
+  doc, err := db.get("awesome")
+  if err != nil {
+    log.Fatal(err)
+  }
+  nested := doc["nested"].(map[string]interface{})
+  fmt.Println(nested["awesome"])
+
+  // put document
+  type MyDoc struct {
+    Brand string `json:"brand"`
+  }
+  myDoc := MyDoc{"audi"}
+  fmt.Println(myDoc)
+  docRes, err := db.put("tight", myDoc)
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(docRes.Reason)
+
+
+
+
+  //
+  // // create db
+  // status, err := client.create("nice")
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(status)
+  // fmt.Println(status.Ok)
+  //
+  // // delete database
+  // status, err = client.delete("awesome")
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(status)
 }
+
+// HELPER FUNCTIONS
+func request(method, url string, data io.Reader) ([]byte, error) {
+  client := &http.Client{}
+  req, err := http.NewRequest(method, url, data)
+  if err != nil {
+    return nil, err
+  }
+  res, err := client.Do(req)
+  if err != nil {
+    return nil, err
+  }
+  defer res.Body.Close()
+  // return ioutil.ReadAll(res.Body)
+  body, err := ioutil.ReadAll(res.Body)
+  if err != nil {
+    return nil, err
+  }
+  // return body, err
+
+  // continue here and check status code
+  // cannot unmarshal directly to error struct !!!!!!!!
+
+  var _err *Error
+  err = json.Unmarshal(body, &_err)
+  if err != nil {
+    return nil, err
+  }
+  fmt.Println(_err)
+
+
+  return nil, nil
+  // status codes other than 2xx are also errors
+  // if res.StatusCode < 200 || res.StatusCode >= 300 {
+  //   err := Error{
+  //     method,
+  //     url
+  //     res.StatusCode
+  //
+  //   }
+  //   err := errors.New("Document update conflict.")
+  //   return nil, err
+  // }
+}
+
+func marshal(v interface{}) (io.Reader, error) {
+  json, err := json.Marshal(v)
+  if err != nil {
+    return nil, err
+  }
+  return bytes.NewReader(json), nil
+}
+
+// type Error struct {
+//   Method string
+//   Url string
+//   StatusCode int
+//   Error string
+//   Reason
+// }
