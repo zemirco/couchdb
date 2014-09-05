@@ -60,8 +60,13 @@ type Error struct {
   Method string
   Url string
   StatusCode int
-  Error string
+  Type string `json:"error"`
   Reason string
+}
+
+// custom Error struct has to implement Error method
+func (e *Error) Error() string {
+  return "CouchDB: " + e.Type + " - " + e.Reason
 }
 
 // CLIENT OPERATIONS
@@ -185,55 +190,54 @@ func main() {
   client := &Client{url}
 
   // get server info
-  couch, err := client.info()
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println(couch.Vendor.Version)
+  // couch, err := client.info()
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(couch.Vendor.Version)
 
   // get all dbs
-  res, err := client.all()
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println(res)
+  // res, err := client.all()
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(res)
 
   // get db information
-  info, err := client.get("nice")
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println(info)
+  // info, err := client.get("nice")
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(info)
 
   // use db
   db := client.use("nice")
 
   // get document head
-  head, err := db.head("awesome")
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println(head.StatusCode)
+  // head, err := db.head("awesome")
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(head.StatusCode)
 
   // get document
-  doc, err := db.get("awesome")
-  if err != nil {
-    log.Fatal(err)
-  }
-  nested := doc["nested"].(map[string]interface{})
-  fmt.Println(nested["awesome"])
+  // doc, err := db.get("awesome")
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // nested := doc["nested"].(map[string]interface{})
+  // fmt.Println(nested["awesome"])
 
   // put document
   type MyDoc struct {
     Brand string `json:"brand"`
   }
   myDoc := MyDoc{"audi"}
-  fmt.Println(myDoc)
-  docRes, err := db.put("tight", myDoc)
+  _, err := db.put("tight", myDoc)
   if err != nil {
+    fmt.Println(err.Type)
     log.Fatal(err)
   }
-  fmt.Println(docRes.Reason)
 
 
 
@@ -255,6 +259,9 @@ func main() {
   // fmt.Println(status)
 }
 
+// PROBLEM
+// return normal error vs return custom Error struct
+
 // HELPER FUNCTIONS
 func request(method, url string, data io.Reader) ([]byte, error) {
   client := &http.Client{}
@@ -267,36 +274,24 @@ func request(method, url string, data io.Reader) ([]byte, error) {
     return nil, err
   }
   defer res.Body.Close()
-  // return ioutil.ReadAll(res.Body)
   body, err := ioutil.ReadAll(res.Body)
   if err != nil {
     return nil, err
   }
-  // return body, err
-
-  // continue here and check status code
-  // cannot unmarshal directly to error struct !!!!!!!!
-
-  var _err *Error
-  err = json.Unmarshal(body, &_err)
+  // handle CouchDB http errors
+  var error *Error
+  err = json.Unmarshal(body, &error)
   if err != nil {
     return nil, err
   }
-  fmt.Println(_err)
-
-
-  return nil, nil
-  // status codes other than 2xx are also errors
-  // if res.StatusCode < 200 || res.StatusCode >= 300 {
-  //   err := Error{
-  //     method,
-  //     url
-  //     res.StatusCode
-  //
-  //   }
-  //   err := errors.New("Document update conflict.")
-  //   return nil, err
-  // }
+  if error.Type != "" && error.Reason != "" {
+    fmt.Println(method)
+    error.Method = method
+    error.Url = url
+    error.StatusCode = res.StatusCode
+    return nil, error
+  }
+  return body, nil
 }
 
 func marshal(v interface{}) (io.Reader, error) {
@@ -306,11 +301,3 @@ func marshal(v interface{}) (io.Reader, error) {
   }
   return bytes.NewReader(json), nil
 }
-
-// type Error struct {
-//   Method string
-//   Url string
-//   StatusCode int
-//   Error string
-//   Reason
-// }
