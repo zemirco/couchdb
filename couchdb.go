@@ -66,7 +66,7 @@ type Error struct {
 
 // custom Error struct has to implement Error method
 func (e *Error) Error() string {
-  return "CouchDB: " + e.Type + " - " + e.Reason
+  return fmt.Sprintf("CouchDB - %s %s, Status Code: %d, Error: %s, Reason: %s", e.Method, e.Url, e.StatusCode, e.Type, e.Reason)
 }
 
 // CLIENT OPERATIONS
@@ -138,7 +138,7 @@ func (c *Client) delete(name string) (*DbResponse, error) {
 }
 
 func (c *Client) use(name string) (Database) {
-  return Database{c.Url + "/" + name + "/"}
+  return Database{c.Url + name + "/"}
 }
 
 
@@ -235,7 +235,7 @@ func main() {
   myDoc := MyDoc{"audi"}
   _, err := db.put("tight", myDoc)
   if err != nil {
-    fmt.Println(err.Type)
+    // fmt.Println(err.Type)
     log.Fatal(err)
   }
 
@@ -285,7 +285,6 @@ func request(method, url string, data io.Reader) ([]byte, error) {
     return nil, err
   }
   if error.Type != "" && error.Reason != "" {
-    fmt.Println(method)
     error.Method = method
     error.Url = url
     error.StatusCode = res.StatusCode
