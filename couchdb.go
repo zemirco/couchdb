@@ -259,9 +259,6 @@ func main() {
   // fmt.Println(status)
 }
 
-// PROBLEM
-// return normal error vs return custom Error struct
-
 // HELPER FUNCTIONS
 func request(method, url string, data io.Reader) ([]byte, error) {
   client := &http.Client{}
