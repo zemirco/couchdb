@@ -48,14 +48,6 @@ type DbResponse struct {
   Reason string
 }
 
-type DocResponse struct {
-  Ok bool
-  Id string
-  Rev string
-  Error string
-  Reason string
-}
-
 type Error struct {
   Method string
   Url string
@@ -67,6 +59,12 @@ type Error struct {
 // custom Error struct has to implement Error method
 func (e *Error) Error() string {
   return fmt.Sprintf("CouchDB - %s %s, Status Code: %d, Error: %s, Reason: %s", e.Method, e.Url, e.StatusCode, e.Type, e.Reason)
+}
+
+// leave out _rev when empty otherwise "Invalid rev format"
+type Document struct {
+  Id string `json:"_id"`
+  Rev string `json:"_rev,omitempty"`
 }
 
 // CLIENT OPERATIONS
@@ -155,26 +153,33 @@ func (db *Database) head(id string) (*http.Response, error) {
   return http.Head(db.Url + id)
 }
 
-func (db *Database) get(id string) (map[string]interface{}, error) {
+func (db *Database) get(document interface{}, id string) error {
   body, err := request("GET", db.Url + id, nil)
   if err != nil {
-    return nil, err
+    return err
   }
-  var data map[string]interface{}
-  return data, json.Unmarshal(body, &data)
+  return json.Unmarshal(body, &document)
 }
 
-func (db *Database) put(id string, document interface{}) (*DocResponse, error) {
-  data, err := marshal(document)
+func (db *Database) put(doc interface{}) error {
+  res, err := json.Marshal(doc)
   if err != nil {
-    return nil, err
+    return err
   }
-  body, err := request("PUT", db.Url + id, data)
+  var document *Document
+  err = json.Unmarshal(res, &document)
   if err != nil {
-    return nil, err
+    return err
   }
-  var res *DocResponse
-  return res, json.Unmarshal(body, &res)
+  data := bytes.NewReader(res)
+  if err != nil {
+    return err
+  }
+  _, err = request("PUT", db.Url + document.Id, data)
+  if err != nil {
+    return err
+  }
+  return db.get(doc, document.Id)
 }
 
 
@@ -220,25 +225,33 @@ func main() {
   // }
   // fmt.Println(head.StatusCode)
 
-  // get document
-  // doc, err := db.get("awesome")
-  // if err != nil {
-  //   log.Fatal(err)
-  // }
-  // nested := doc["nested"].(map[string]interface{})
-  // fmt.Println(nested["awesome"])
-
-  // put document
   type MyDoc struct {
+    Document
     Brand string `json:"brand"`
+    Name string
+    Nested struct {
+      Awesome string
+    }
   }
-  myDoc := MyDoc{"audi"}
-  _, err := db.put("tight", myDoc)
+
+  // get document
+  var myDoc *MyDoc
+  err := db.get(&myDoc, "awesome")
   if err != nil {
-    // fmt.Println(err.Type)
     log.Fatal(err)
   }
+  fmt.Println(myDoc)
 
+  myDoc.Name = "sour"
+  err = db.put(&myDoc)
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(myDoc)
+
+  // doc["foo"] = "bar"
+  // nested := doc["nested"].(map[string]interface{})
+  // fmt.Println(nested["awesome"])
 
 
 
@@ -290,10 +303,13 @@ func request(method, url string, data io.Reader) ([]byte, error) {
   return body, nil
 }
 
-func marshal(v interface{}) (io.Reader, error) {
-  json, err := json.Marshal(v)
-  if err != nil {
-    return nil, err
-  }
-  return bytes.NewReader(json), nil
-}
+// func marshal(v interface{}) (io.Reader, error) {
+//   res, err := json.Marshal(v)
+//   var document *Document
+//   json.Unmarshal(res, &document)
+//   fmt.Println(document.Id)
+//   if err != nil {
+//     return nil, err
+//   }
+//   return bytes.NewReader(res), nil
+// }
