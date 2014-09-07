@@ -63,8 +63,14 @@ func (e *Error) Error() string {
 
 // leave out _rev when empty otherwise "Invalid rev format"
 type Document struct {
-  Id string `json:"_id"`
+  Id string `json:"_id,omitempty"`
   Rev string `json:"_rev,omitempty"`
+}
+
+type DocResponse struct {
+  Ok bool
+  Id string
+  Rev string
 }
 
 // CLIENT OPERATIONS
@@ -182,6 +188,26 @@ func (db *Database) put(doc interface{}) error {
   return db.get(doc, document.Id)
 }
 
+func (db *Database) post(doc interface{}) error {
+  res, err := json.Marshal(doc)
+  if err != nil {
+    return err
+  }
+  data := bytes.NewReader(res)
+  if err != nil {
+    return err
+  }
+  body, err := request("POST", db.Url, data)
+  if err != nil {
+    return err
+  }
+  var response *DocResponse
+  err = json.Unmarshal(body, &response)
+  if err != nil {
+    return err
+  }
+  return db.get(doc, response.Id)
+}
 
 // FUNC MAIN
 
@@ -234,20 +260,32 @@ func main() {
     }
   }
 
-  // get document
-  var myDoc *MyDoc
-  err := db.get(&myDoc, "awesome")
-  if err != nil {
-    log.Fatal(err)
+  // create document
+  myDoc := MyDoc{
+    Brand: "volvo",
+    Name: "Pickup",
   }
-  fmt.Println(myDoc)
 
-  myDoc.Name = "sour"
-  err = db.put(&myDoc)
+  err := db.post(&myDoc)
   if err != nil {
     log.Fatal(err)
   }
-  fmt.Println(myDoc)
+  fmt.Println(myDoc.Name)
+
+  // get document
+  // var myDoc *MyDoc
+  // err := db.get(&myDoc, "awesome")
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(myDoc)
+  //
+  // myDoc.Name = "sour"
+  // err = db.put(&myDoc)
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(myDoc)
 
   // doc["foo"] = "bar"
   // nested := doc["nested"].(map[string]interface{})
@@ -276,6 +314,8 @@ func main() {
 func request(method, url string, data io.Reader) ([]byte, error) {
   client := &http.Client{}
   req, err := http.NewRequest(method, url, data)
+  // for post request
+  req.Header.Set("Content-Type", "application/json")
   if err != nil {
     return nil, err
   }
