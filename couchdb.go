@@ -222,11 +222,11 @@ func main() {
   client := Client{url}
 
   // get server info
-  couch, err := client.info()
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println(couch)
+  // couch, err := client.info()
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(couch)
 
   // get all dbs
   // res, err := client.all()
@@ -236,21 +236,21 @@ func main() {
   // fmt.Println(res)
 
   // get db information
-  // info, err := client.get("nice")
+  // info, err := client.get("_users")
   // if err != nil {
   //   log.Fatal(err)
   // }
   // fmt.Println(info)
 
   // use db
-  // db := client.use("nice")
+  db := client.use("_users")
 
   // get document head
-  // head, err := db.head("awesome")
-  // if err != nil {
-  //   log.Fatal(err)
-  // }
-  // fmt.Println(head.StatusCode)
+  head, err := db.head("_design/_auth")
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(head.StatusCode)
 
   // type MyDoc struct {
   //   Document

@@ -33,7 +33,7 @@ type Server struct {
 
 ##### [GET /](http://docs.couchdb.org/en/latest/api/server/common.html#get--)
 
-Returns struct of type [Server](#server).
+Returns [`Server`](#server).
 
 ```go
 couch, err := client.info()
@@ -50,12 +50,28 @@ couch, err := client.info()
 
 ##### [GET /_all_dbs](http://docs.couchdb.org/en/latest/api/server/common.html#all-dbs)
 
-Returns a slice of strings.
+Returns `[]string`.
 
 ```go
 res, err := client.all()
 // [_replicator _users]
 ```
+
+## [Documents](http://docs.couchdb.org/en/latest/api/document/common.html)
+
+Take your client and use a database.
+
+```go
+db := client.use("_users")
+```
+
+##### [HEAD /docid](http://docs.couchdb.org/en/latest/api/document/common.html#head--db-docid)
+
+```go
+head, err := db.head("_design/_auth")
+```
+
+Returns `http.Response`.
 
 ## License
 
