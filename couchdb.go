@@ -99,6 +99,7 @@ func (c *Client) info() (*Server, error) {
 func (c *Client) all() ([]string, error) {
   body, err := request("GET", c.Url + "_all_dbs", nil)
   if err != nil {
+    fmt.Println("here")
     return nil, err
   }
   var data []string
@@ -218,14 +219,14 @@ func main() {
   const url = "http://127.0.0.1:5984/"
 
   // create client
-  client := &Client{url}
+  client := Client{url}
 
   // get server info
-  // couch, err := client.info()
-  // if err != nil {
-  //   log.Fatal(err)
-  // }
-  // fmt.Println(couch.Vendor.Version)
+  couch, err := client.info()
+  if err != nil {
+    log.Fatal(err)
+  }
+  fmt.Println(couch)
 
   // get all dbs
   // res, err := client.all()
@@ -242,7 +243,7 @@ func main() {
   // fmt.Println(info)
 
   // use db
-  db := client.use("nice")
+  // db := client.use("nice")
 
   // get document head
   // head, err := db.head("awesome")
@@ -251,26 +252,26 @@ func main() {
   // }
   // fmt.Println(head.StatusCode)
 
-  type MyDoc struct {
-    Document
-    Brand string `json:"brand"`
-    Name string
-    Nested struct {
-      Awesome string
-    }
-  }
-
-  // create document
-  myDoc := MyDoc{
-    Brand: "volvo",
-    Name: "Pickup",
-  }
-
-  err := db.post(&myDoc)
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Println(myDoc.Name)
+  // type MyDoc struct {
+  //   Document
+  //   Brand string `json:"brand"`
+  //   Name string
+  //   Nested struct {
+  //     Awesome string
+  //   }
+  // }
+  //
+  // // create document
+  // myDoc := MyDoc{
+  //   Brand: "volvo",
+  //   Name: "Pickup",
+  // }
+  //
+  // err := db.post(&myDoc)
+  // if err != nil {
+  //   log.Fatal(err)
+  // }
+  // fmt.Println(myDoc.Name)
 
   // get document
   // var myDoc *MyDoc
@@ -329,16 +330,18 @@ func request(method, url string, data io.Reader) ([]byte, error) {
     return nil, err
   }
   // handle CouchDB http errors
-  var error *Error
-  err = json.Unmarshal(body, &error)
-  if err != nil {
-    return nil, err
-  }
-  if error.Type != "" && error.Reason != "" {
-    error.Method = method
-    error.Url = url
-    error.StatusCode = res.StatusCode
-    return nil, error
+  if res.StatusCode < 200 || res.StatusCode >= 300 {
+    var error *Error
+    err = json.Unmarshal(body, &error)
+    if err != nil {
+      return nil, err
+    }
+    if error.Type != "" && error.Reason != "" {
+      error.Method = method
+      error.Url = url
+      error.StatusCode = res.StatusCode
+      return nil, error
+    }
   }
   return body, nil
 }
