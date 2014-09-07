@@ -17,7 +17,7 @@ client := Client{"http://127.0.0.1:5984/"}
 
 ##### Server
 
-```
+```go
 type Server struct {
   Couchdb string
   Uuid string
@@ -33,7 +33,7 @@ type Server struct {
 
 ##### [GET /](http://docs.couchdb.org/en/latest/api/server/common.html#get--)
 
-Returns struct of type Server.
+Returns struct of type [Server](#server).
 
 ```go
 couch, err := client.info()
