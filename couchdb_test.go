@@ -9,6 +9,7 @@ var client = Client{"http://127.0.0.1:5984/"}
 
 func TestInfo(t *testing.T) {
   info, err := client.info()
+  t.Log(info)
   if err != nil {
     t.Fatal(err)
   }

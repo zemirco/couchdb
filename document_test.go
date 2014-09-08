@@ -42,7 +42,7 @@ func TestDocumentPost(t *testing.T) {
   if doc.Rev != "" {
     t.Error("new document should not have a revision")
   }
-  res, err := db.post(doc)
+  res, err := db.Post(doc)
   if err != nil {
     t.Fatal(err)
   }
@@ -52,7 +52,7 @@ func TestDocumentPost(t *testing.T) {
 }
 
 func TestDocumentHead(t *testing.T) {
-  head, err := db.head("testid")
+  head, err := db.Head("testid")
   if err != nil {
     t.Fatal(err)
   }
@@ -63,7 +63,7 @@ func TestDocumentHead(t *testing.T) {
 
 func TestDocumentGet(t *testing.T) {
   doc := new(DummyDocument)
-  err := db.get(doc, "testid")
+  err := db.Get(doc, "testid")
   if err != nil {
     t.Fatal(err)
   }
@@ -75,13 +75,13 @@ func TestDocumentGet(t *testing.T) {
 func TestDocumentPut(t *testing.T) {
   // get document
   doc := new(DummyDocument)
-  err := db.get(doc, "testid")
+  err := db.Get(doc, "testid")
   if err != nil {
     t.Fatal(err)
   }
   // change document
   doc.Foo = "baz"
-  res, err := db.put(doc)
+  res, err := db.Put(doc)
   if err != nil {
     t.Fatal(err)
   }
@@ -93,12 +93,12 @@ func TestDocumentPut(t *testing.T) {
 func TestDocumentDelete(t *testing.T) {
   // get document
   doc := new(DummyDocument)
-  err := db.get(doc, "testid")
+  err := db.Get(doc, "testid")
   if err != nil {
     t.Fatal(err)
   }
   // delete document
-  res, err := db.delete(doc)
+  res, err := db.Delete(doc)
   if err != nil {
     t.Fatal(err)
   }

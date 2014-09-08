@@ -14,14 +14,14 @@ type Database struct {
  * Head request.
  */
 
-func (db *Database) head(id string) (*http.Response, error) {
+func (db *Database) Head(id string) (*http.Response, error) {
   return http.Head(db.Url + id)
 }
 
 /**
  * Get document
  */
-func (db *Database) get(doc CouchDoc, id string) error {
+func (db *Database) Get(doc CouchDoc, id string) error {
   body, err := request("GET", db.Url + id, nil)
   if err != nil {
     return err
@@ -32,7 +32,7 @@ func (db *Database) get(doc CouchDoc, id string) error {
 /**
  * Put document.
  */
-func (db *Database) put(doc CouchDoc) (*DocumentResponse, error) {
+func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
   res, err := json.Marshal(doc)
   if err != nil {
     return nil, err
@@ -49,7 +49,7 @@ func (db *Database) put(doc CouchDoc) (*DocumentResponse, error) {
 /**
  * Post document.
  */
-func (db *Database) post(doc CouchDoc) (*DocumentResponse, error) {
+func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
   res, err := json.Marshal(doc)
   if err != nil {
     return nil, err
@@ -65,7 +65,7 @@ func (db *Database) post(doc CouchDoc) (*DocumentResponse, error) {
 /**
  * Delete document.
  */
-func (db *Database) delete(doc CouchDoc) (*DocumentResponse, error) {
+func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
   id := doc.GetId()
   rev := doc.GetRev()
   body, err := request("DELETE", db.Url + id + "?rev=" + rev, nil)
