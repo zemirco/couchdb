@@ -8,7 +8,7 @@ import (
 var client = Client{"http://127.0.0.1:5984/"}
 
 func TestInfo(t *testing.T) {
-  info, err := client.info()
+  info, err := client.Info()
   t.Log(info)
   if err != nil {
     t.Fatal(err)
@@ -22,7 +22,7 @@ func TestInfo(t *testing.T) {
 }
 
 func TestAll(t *testing.T) {
-  res, err := client.all()
+  res, err := client.All()
   if err != nil {
     t.Fatal(err)
   }
@@ -32,7 +32,7 @@ func TestAll(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-  info, err := client.get("_users")
+  info, err := client.Get("_users")
   if err != nil {
     t.Fatal(err)
   }
@@ -45,7 +45,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-  status, err := client.create("dummy")
+  status, err := client.Create("dummy")
   if err != nil {
     t.Fatal(err)
   }
@@ -58,14 +58,14 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateFail(t *testing.T) {
-  _, err := client.create("dummy")
+  _, err := client.Create("dummy")
   if err == nil {
     t.Fatal("should not create duplicate database")
   }
 }
 
 func TestDelete(t *testing.T) {
-  status, err := client.delete("dummy")
+  status, err := client.Delete("dummy")
   if err != nil {
     t.Fatal(err)
   }
@@ -78,7 +78,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteFail(t *testing.T) {
-  _, err := client.delete("dummy")
+  _, err := client.Delete("dummy")
   if err == nil {
     t.Fatal("should not delete non existing database")
   }
@@ -88,7 +88,7 @@ func TestUse(t *testing.T) {
   out := Database{
     Url: "http://127.0.0.1:5984/_users/",
   }
-  db := client.use("_users")
+  db := client.Use("_users")
   if reflect.DeepEqual(out, db) == false {
     t.Error("use error")
   }

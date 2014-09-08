@@ -10,7 +10,7 @@ import (
 /**
  * Get server information.
  */
-func (c *Client) info() (*Server, error) {
+func (c *Client) Info() (*Server, error) {
   body, err := request("GET", c.Url, nil)
   if err != nil {
     return nil, err
@@ -26,7 +26,7 @@ func (c *Client) info() (*Server, error) {
 /**
  * Get all databases.
  */
-func (c *Client) all() ([]string, error) {
+func (c *Client) All() ([]string, error) {
   body, err := request("GET", c.Url + "_all_dbs", nil)
   if err != nil {
     return nil, err
@@ -38,7 +38,7 @@ func (c *Client) all() ([]string, error) {
 /**
  * Get database.
  */
-func (c *Client) get(name string) (*DatabaseInfo, error) {
+func (c *Client) Get(name string) (*DatabaseInfo, error) {
   body, err := request("GET", c.Url + name, nil)
   if err != nil {
     return nil, err
@@ -50,7 +50,7 @@ func (c *Client) get(name string) (*DatabaseInfo, error) {
 /**
  * Create database.
  */
-func (c *Client) create(name string) (*DbResponse, error) {
+func (c *Client) Create(name string) (*DbResponse, error) {
   body, err := request("PUT", c.Url + name, nil)
   if err != nil {
     return nil, err
@@ -62,7 +62,7 @@ func (c *Client) create(name string) (*DbResponse, error) {
 /**
  * Delete database.
  */
-func (c *Client) delete(name string) (*DbResponse, error) {
+func (c *Client) Delete(name string) (*DbResponse, error) {
   body, err := request("DELETE", c.Url + name, nil)
   if err != nil {
     return nil, err
@@ -74,7 +74,7 @@ func (c *Client) delete(name string) (*DbResponse, error) {
 /**
  * Use database.
  */
-func (c *Client) use(name string) (Database) {
+func (c *Client) Use(name string) (Database) {
   return Database{c.Url + name + "/"}
 }
 

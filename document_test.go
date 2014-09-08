@@ -21,11 +21,11 @@ func (doc *DummyDocument) GetRev() string {
 
 // init client and test database
 var c = Client{"http://127.0.0.1:5984/"}
-var db = c.use("dummy")
+var db = c.Use("dummy")
 
 func TestBefore(t *testing.T) {
   log.Print("creating dummy database")
-  _, err := client.create("dummy")
+  _, err := client.Create("dummy")
   if err != nil {
     log.Fatal(err)
   }
@@ -109,7 +109,7 @@ func TestDocumentDelete(t *testing.T) {
 
 func TestAfter(t *testing.T) {
   log.Print("deleting dummy database")
-  _, err := client.delete("dummy")
+  _, err := client.Delete("dummy")
   if err != nil {
     log.Fatal(err)
   }
