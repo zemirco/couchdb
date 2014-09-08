@@ -10,17 +10,12 @@ type Database struct {
   Url string
 }
 
-/**
- * Head request.
- */
-
+// Head request.
 func (db *Database) Head(id string) (*http.Response, error) {
   return http.Head(db.Url + id)
 }
 
-/**
- * Get document
- */
+// Get document.
 func (db *Database) Get(doc CouchDoc, id string) error {
   body, err := request("GET", db.Url + id, nil)
   if err != nil {
@@ -29,9 +24,7 @@ func (db *Database) Get(doc CouchDoc, id string) error {
   return json.Unmarshal(body, doc)
 }
 
-/**
- * Put document.
- */
+// Put document.
 func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
   res, err := json.Marshal(doc)
   if err != nil {
@@ -46,9 +39,7 @@ func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
   return response, json.Unmarshal(body, &response)
 }
 
-/**
- * Post document.
- */
+// Post document.
 func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
   res, err := json.Marshal(doc)
   if err != nil {
@@ -62,9 +53,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
   return response, json.Unmarshal(body, &response)
 }
 
-/**
- * Delete document.
- */
+// Delete document.
 func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
   id := doc.GetId()
   rev := doc.GetRev()

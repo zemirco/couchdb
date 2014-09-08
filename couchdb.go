@@ -7,9 +7,7 @@ import (
   "io"
 )
 
-/**
- * Get server information.
- */
+// Get server information.
 func (c *Client) Info() (*Server, error) {
   body, err := request("GET", c.Url, nil)
   if err != nil {
@@ -23,9 +21,7 @@ func (c *Client) Info() (*Server, error) {
   return server, nil
 }
 
-/**
- * Get all databases.
- */
+// Get all databases.
 func (c *Client) All() ([]string, error) {
   body, err := request("GET", c.Url + "_all_dbs", nil)
   if err != nil {
@@ -35,9 +31,7 @@ func (c *Client) All() ([]string, error) {
   return data, json.Unmarshal(body, &data)
 }
 
-/**
- * Get database.
- */
+// Get database.
 func (c *Client) Get(name string) (*DatabaseInfo, error) {
   body, err := request("GET", c.Url + name, nil)
   if err != nil {
@@ -47,9 +41,7 @@ func (c *Client) Get(name string) (*DatabaseInfo, error) {
   return dbInfo, json.Unmarshal(body, &dbInfo)
 }
 
-/**
- * Create database.
- */
+// Create database.
 func (c *Client) Create(name string) (*DbResponse, error) {
   body, err := request("PUT", c.Url + name, nil)
   if err != nil {
@@ -59,9 +51,7 @@ func (c *Client) Create(name string) (*DbResponse, error) {
   return DbResponse, json.Unmarshal(body, &DbResponse)
 }
 
-/**
- * Delete database.
- */
+// Delete database.
 func (c *Client) Delete(name string) (*DbResponse, error) {
   body, err := request("DELETE", c.Url + name, nil)
   if err != nil {
@@ -71,9 +61,7 @@ func (c *Client) Delete(name string) (*DbResponse, error) {
   return DbResponse, json.Unmarshal(body, &DbResponse)
 }
 
-/**
- * Use database.
- */
+// Use database.
 func (c *Client) Use(name string) (Database) {
   return Database{c.Url + name + "/"}
 }
