@@ -16,9 +16,6 @@ func TestInfo(t *testing.T) {
   if info.Couchdb != "Welcome" {
     t.Error("Couchdb error")
   }
-  if info.Vendor.Name != "The Apache Software Foundation" {
-    t.Error("Vendor.Name error")
-  }
 }
 
 func TestAll(t *testing.T) {
