@@ -23,11 +23,7 @@ func (doc *DummyDocument) GetRev() string {
 var c = Client{"http://127.0.0.1:5984/"}
 var db = c.use("dummy")
 
-/**
- * Helper functions for database initialisation.
- */
-
-func before() {
+func TestBefore(t *testing.T) {
   log.Print("creating dummy database")
   _, err := client.create("dummy")
   if err != nil {
@@ -35,21 +31,7 @@ func before() {
   }
 }
 
-func after() {
-  log.Print("deleting dummy database")
-  _, err := client.delete("dummy")
-  if err != nil {
-    log.Fatal(err)
-  }
-}
-
-/**
- * Start tests.
- */
-
 func TestDocumentPost(t *testing.T) {
-  before()
-  // create document instance
   doc := &DummyDocument{
     Document: Document{
       Id: "testid",
@@ -123,6 +105,12 @@ func TestDocumentDelete(t *testing.T) {
   if res.Id != "testid" || res.Ok == false {
     t.Error("delete document response error")
   }
-  // clean up
-  after()
+}
+
+func TestAfter(t *testing.T) {
+  log.Print("deleting dummy database")
+  _, err := client.delete("dummy")
+  if err != nil {
+    log.Fatal(err)
+  }
 }
