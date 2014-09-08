@@ -21,6 +21,16 @@ func (c *Client) Info() (*Server, error) {
   return server, nil
 }
 
+// List of running tasks.
+func (c *Client) ActiveTasks() ([]Task, error) {
+  body, err := request("GET", c.Url + "_active_tasks", nil)
+  if err != nil {
+    return nil, err
+  }
+  var tasks []Task
+  return tasks, json.Unmarshal(body, &tasks)
+}
+
 // Get all databases.
 func (c *Client) All() ([]string, error) {
   body, err := request("GET", c.Url + "_all_dbs", nil)

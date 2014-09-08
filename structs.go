@@ -67,3 +67,16 @@ type DocumentResponse struct {
   Id string
   Rev string
 }
+
+type Task struct {
+  ChangesDone int `json:"changes_done"`
+  Database string
+  Pid string
+  Progress int
+  StartedOn int `json:"started_on"`
+  Status string
+  Task string
+  TotalChanges int `json:"total_changes"`
+  Type string
+  UpdatedOn string `json:"updated_on"`
+}

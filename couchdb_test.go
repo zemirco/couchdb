@@ -9,12 +9,22 @@ var client = Client{"http://127.0.0.1:5984/"}
 
 func TestInfo(t *testing.T) {
   info, err := client.Info()
-  t.Log(info)
   if err != nil {
     t.Fatal(err)
   }
   if info.Couchdb != "Welcome" {
     t.Error("Couchdb error")
+  }
+}
+
+func TestActiveTasks(t *testing.T) {
+  res, err := client.ActiveTasks()
+  if err != nil {
+    t.Fatal(err)
+  }
+  out := make([]Task, 0)
+  if reflect.DeepEqual(out, res) == false {
+    t.Error("active tasks should be an empty array")
   }
 }
 
