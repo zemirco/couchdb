@@ -1,6 +1,8 @@
 
 # go-relax
 
+[![Build Status](https://travis-ci.org/zemirco/go-relax.svg)](https://travis-ci.org/zemirco/go-relax)
+
 CouchDB client written in Go.
 
 work in progress ...
@@ -72,6 +74,10 @@ head, err := db.head("_design/_auth")
 ```
 
 Returns `http.Response`.
+
+## Test
+
+`go test`
 
 ## License
 
