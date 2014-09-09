@@ -35,7 +35,7 @@ type DatabaseInfo struct {
   CommittedUpdateSeq int `json:"committed_update_seq"`
 }
 
-type DbResponse struct {
+type DatabaseResponse struct {
   Ok bool
   Error string
   Reason string
