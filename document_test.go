@@ -2,7 +2,6 @@ package couchdb
 
 import (
   "testing"
-  "log"
 )
 
 type DummyDocument struct {
@@ -20,10 +19,10 @@ var c = Client{"http://127.0.0.1:5984/"}
 var db = c.Use("dummy")
 
 func TestBefore(t *testing.T) {
-  log.Print("creating dummy database")
+  t.Log("creating dummy database")
   _, err := client.Create("dummy")
   if err != nil {
-    log.Fatal(err)
+    t.Fatal(err)
   }
 }
 
@@ -103,10 +102,27 @@ func TestDocumentDelete(t *testing.T) {
   }
 }
 
+func TestDocumentPutAttachment(t *testing.T) {
+  doc := &DummyDocument{
+    Document: Document{
+      Id: "testid",
+    },
+    Foo: "bar",
+    Beep: "bopp",
+  }
+  res, err := db.PutAttachment(doc, "./test/dog.jpg")
+  if err != nil {
+    t.Fatal(err)
+  }
+  if res.Id != "testid" || res.Ok == false {
+    t.Error("put attachment error")
+  }
+}
+
 func TestAfter(t *testing.T) {
-  log.Print("deleting dummy database")
+  t.Log("deleting dummy database")
   _, err := client.Delete("dummy")
   if err != nil {
-    log.Fatal(err)
+    t.Fatal(err)
   }
 }
