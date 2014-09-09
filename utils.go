@@ -52,3 +52,9 @@ func newError(res *http.Response, body []byte) error {
   error.StatusCode = res.StatusCode
   return error
 }
+
+// Create new CouchDB response for any document method.
+func newDocumentResponse(body []byte) (*DocumentResponse, error) {
+  var response *DocumentResponse
+  return response, json.Unmarshal(body, &response)
+}

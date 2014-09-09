@@ -42,8 +42,7 @@ func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
   if err != nil {
     return nil, err
   }
-  var response *DocumentResponse
-  return response, json.Unmarshal(body, &response)
+  return newDocumentResponse(body)
 }
 
 // Post document.
@@ -56,8 +55,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
   if err != nil {
     return nil, err
   }
-  var response *DocumentResponse
-  return response, json.Unmarshal(body, &response)
+  return newDocumentResponse(body)
 }
 
 // Delete document.
@@ -67,8 +65,7 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
   if err != nil {
     return nil, err
   }
-  var response *DocumentResponse
-  return response, json.Unmarshal(body, &response)
+  return newDocumentResponse(body)
 }
 
 // Put attachment.
@@ -160,6 +157,5 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
   if err != nil {
     return nil, err
   }
-  var response *DocumentResponse
-  return response, json.Unmarshal(body, &response)
+  return newDocumentResponse(body)
 }
