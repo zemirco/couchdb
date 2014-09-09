@@ -49,23 +49,21 @@ func (c *Client) Get(name string) (*DatabaseInfo, error) {
 }
 
 // Create database.
-func (c *Client) Create(name string) (*DbResponse, error) {
+func (c *Client) Create(name string) (*DatabaseResponse, error) {
   body, err := request("PUT", c.Url + name, nil)
   if err != nil {
     return nil, err
   }
-  var DbResponse *DbResponse
-  return DbResponse, json.Unmarshal(body, &DbResponse)
+  return newDatabaseResponse(body)
 }
 
 // Delete database.
-func (c *Client) Delete(name string) (*DbResponse, error) {
+func (c *Client) Delete(name string) (*DatabaseResponse, error) {
   body, err := request("DELETE", c.Url + name, nil)
   if err != nil {
     return nil, err
   }
-  var DbResponse *DbResponse
-  return DbResponse, json.Unmarshal(body, &DbResponse)
+  return newDatabaseResponse(body)
 }
 
 // Use database.
