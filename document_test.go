@@ -11,12 +11,8 @@ type DummyDocument struct {
   Beep string `json:"beep"`
 }
 
-func (doc *DummyDocument) GetId() string {
-  return doc.Document.Id
-}
-
-func (doc *DummyDocument) GetRev() string {
-  return doc.Document.Rev
+func (doc *DummyDocument) GetDocument() *Document {
+  return &doc.Document
 }
 
 // init client and test database
