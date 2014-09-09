@@ -6,11 +6,8 @@ import (
   "fmt"
   "os"
   "mime/multipart"
-  "net/textproto"
   "net/http"
-  "io"
   "io/ioutil"
-  "path/filepath"
 )
 
 type Database struct {
@@ -87,47 +84,13 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
   writer := multipart.NewWriter(&buffer)
 
   // create first "application/json" document part
-  partHeaders := textproto.MIMEHeader{}
-	partHeaders.Set("Content-Type", "application/json")
-  part, err := writer.CreatePart(partHeaders)
+  err = writeJSON(document, writer, file)
   if err != nil {
     return nil, err
   }
 
-  stat, err := file.Stat()
-  if err != nil {
-    return nil, err
-  }
-
-  // make empty map
-  document.Attachments = make(map[string]Attachment)
-  attachment := Attachment{
-    Follows: true,
-    ContentType: mimeType(path),
-    Length: stat.Size(),
-  }
-  filename := filepath.Base(path)
-  // add attachment to map
-  document.Attachments[filename] = attachment
-
-  bytes, err := json.Marshal(doc)
-	if err != nil {
-    return nil, err
-	}
-
-  _, err = part.Write(bytes)
-  if err != nil {
-    return nil, err
-  }
-
-  // create second contents part with empty headers
-  part, err = writer.CreatePart(textproto.MIMEHeader{})
-  if err != nil {
-    return nil, err
-  }
-
-  // copy file contents into multipart message
-  _, err = io.Copy(part, file)
+  // write actual file content to multipart message
+  err = writeMultipart(writer, file)
   if err != nil {
     return nil, err
   }
