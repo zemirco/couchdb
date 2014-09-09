@@ -4,6 +4,7 @@ import (
   "fmt"
 )
 
+// Create a new client.
 type Client struct {
   Url string
 }
@@ -55,11 +56,11 @@ func (e *Error) Error() string {
 type Document struct {
   Id string `json:"_id,omitempty"`
   Rev string `json:"_rev,omitempty"`
+  Attachments map[string]Attachment `json:"_attachments,omitempty"`
 }
 
 type CouchDoc interface {
-  GetId() string
-  GetRev() string
+  GetDocument() *Document
 }
 
 type DocumentResponse struct {
@@ -68,6 +69,7 @@ type DocumentResponse struct {
   Rev string
 }
 
+// http://docs.couchdb.org/en/latest/api/server/common.html#active-tasks
 type Task struct {
   ChangesDone int `json:"changes_done"`
   Database string
@@ -79,4 +81,11 @@ type Task struct {
   TotalChanges int `json:"total_changes"`
   Type string
   UpdatedOn string `json:"updated_on"`
+}
+
+// http://docs.couchdb.org/en/latest/api/document/common.html#creating-multiple-attachments
+type Attachment struct {
+  Follows bool `json:"follows"`
+  ContentType string `json:"content_type"`
+  Length int64 `json:"length"`
 }
