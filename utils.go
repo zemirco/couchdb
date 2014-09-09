@@ -7,6 +7,9 @@ import (
   "net/http"
   "io/ioutil"
   "encoding/json"
+  "net/textproto"
+  "os"
+  "mime/multipart"
 )
 
 // Get mime type from file name.
@@ -57,4 +60,65 @@ func newError(res *http.Response, body []byte) error {
 func newDocumentResponse(body []byte) (*DocumentResponse, error) {
   var response *DocumentResponse
   return response, json.Unmarshal(body, &response)
+}
+
+// Create new CouchDB response for any database method.
+func newDatabaseResponse(body []byte) (*DatabaseResponse, error) {
+  var response *DatabaseResponse
+  return response, json.Unmarshal(body, &response)
+}
+
+// Write JSON to multipart/related.
+func writeJSON(document *Document, writer *multipart.Writer, file *os.File) error {
+  partHeaders := textproto.MIMEHeader{}
+  partHeaders.Set("Content-Type", "application/json")
+  part, err := writer.CreatePart(partHeaders)
+  if err != nil {
+    return err
+  }
+
+  stat, err := file.Stat()
+  if err != nil {
+    return err
+  }
+
+  path := file.Name()
+
+  // make empty map
+  document.Attachments = make(map[string]Attachment)
+  attachment := Attachment{
+    Follows: true,
+    ContentType: mimeType(path),
+    Length: stat.Size(),
+  }
+  // add attachment to map
+  filename := filepath.Base(path)
+  document.Attachments[filename] = attachment
+
+  bytes, err := json.Marshal(document)
+  if err != nil {
+    return err
+  }
+
+  _, err = part.Write(bytes)
+  if err != nil {
+    return err
+  }
+  return nil
+}
+
+// Write actual file content to multipart/related.
+func writeMultipart(writer *multipart.Writer, file *os.File) error {
+  part, err := writer.CreatePart(textproto.MIMEHeader{})
+  if err != nil {
+    return err
+  }
+
+  // copy file contents into multipart message
+  _, err = io.Copy(part, file)
+  if err != nil {
+    return err
+  }
+
+  return nil
 }
