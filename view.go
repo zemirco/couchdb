@@ -13,8 +13,8 @@ func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("%s_view/%s?%s", v.Url, name, q.Encode())
-	body, err := request("GET", url, nil, "")
+	uri := fmt.Sprintf("%s_view/%s?%s", v.Url, name, q.Encode())
+	body, err := request("GET", uri, nil, "")
 	if err != nil {
 		return nil, err
 	}
