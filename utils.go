@@ -10,6 +10,8 @@ import (
 	"net/textproto"
 	"os"
 	"path/filepath"
+	"net/url"
+	"strconv"
 )
 
 // Get mime type from file name.
@@ -123,4 +125,12 @@ func writeMultipart(writer *multipart.Writer, file *os.File) error {
 	}
 
 	return nil
+}
+
+// Quote all values because CouchDB needs those double quotes in query params.
+func quote(values url.Values) url.Values {
+	for key, value := range values {
+		values.Set(key, strconv.Quote(value[0]))
+	}
+	return values
 }
