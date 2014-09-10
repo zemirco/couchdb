@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -21,7 +20,8 @@ func (db *Database) Head(id string) (*http.Response, error) {
 
 // Get document.
 func (db *Database) Get(doc CouchDoc, id string) error {
-	body, err := request("GET", db.Url+id, nil)
+	url := fmt.Sprintf("%s%s", db.Url, id)
+	body, err := request("GET", url, nil, "application/json")
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,9 @@ func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
 		return nil, err
 	}
 	document := doc.GetDocument()
-	body, err := request("PUT", db.Url+document.Id, bytes.NewReader(res))
+	url := fmt.Sprintf("%s%s", db.Url, document.Id)
+	data := bytes.NewReader(res)
+	body, err := request("PUT", url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +50,8 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	body, err := request("POST", db.Url, bytes.NewReader(res))
+	data := bytes.NewReader(res)
+	body, err := request("POST", db.Url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +61,8 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 // Delete document.
 func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	document := doc.GetDocument()
-	body, err := request("DELETE", db.Url+document.Id+"?rev="+document.Rev, nil)
+	url := fmt.Sprintf("%s%s?rev=%s", db.Url, document.Id, document.Rev)
+	body, err := request("DELETE", url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +74,7 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 
 	// target url
 	document := doc.GetDocument()
-	url := db.Url + document.Id
+	url := fmt.Sprintf("%s%s", db.Url, document.Id)
 
 	// get file from disk
 	file, err := os.Open(path)
@@ -102,23 +106,38 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 	}
 
 	// create http request
-	req, err := http.NewRequest("PUT", url, &buffer)
-	if err != nil {
-		return nil, err
-	}
 	contentType := fmt.Sprintf("multipart/related; boundary=%q", writer.Boundary())
-	req.Header.Set("Content-Type", contentType)
-
-	// do http request
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := request("PUT", url, &buffer, contentType)
 	if err != nil {
 		return nil, err
 	}
 	return newDocumentResponse(body)
+}
+
+// The bulk document API allows you to create and update multiple documents
+// at the same time within a single request. The basic operation is similar to
+// creating or updating a single document, except that you batch
+// the document structure and information.
+// func (db *Database) BulkDocs(docs []*CouchDoc) error {
+// 	bulk := BulkDoc{
+// 		Docs: docs,
+// 	}
+// 	res, err := json.Marshal(bulk)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	url := fmt.Sprintf("%s_bulk_docs", db.Url)
+// 	data := bytes.NewReader(res)
+// 	body, err := request("POST", url, data, "application/json")
+// 	fmt.Println(string(body))
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return nil
+// }
+//
+// Use view document.
+func (db *Database) View(name string) View {
+	url := fmt.Sprintf("%s_design/%s/", db.Url, name)
+	return View{url}
 }
