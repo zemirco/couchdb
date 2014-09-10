@@ -2,11 +2,12 @@ package couchdb
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // Get server information.
 func (c *Client) Info() (*Server, error) {
-	body, err := request("GET", c.Url, nil)
+	body, err := request("GET", c.Url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -20,7 +21,8 @@ func (c *Client) Info() (*Server, error) {
 
 // List of running tasks.
 func (c *Client) ActiveTasks() ([]Task, error) {
-	body, err := request("GET", c.Url+"_active_tasks", nil)
+	url := fmt.Sprintf("%s_active_tasks", c.Url)
+	body, err := request("GET", url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +32,8 @@ func (c *Client) ActiveTasks() ([]Task, error) {
 
 // Get all databases.
 func (c *Client) All() ([]string, error) {
-	body, err := request("GET", c.Url+"_all_dbs", nil)
+	url := fmt.Sprintf("%s_all_dbs", c.Url)
+	body, err := request("GET", url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +43,8 @@ func (c *Client) All() ([]string, error) {
 
 // Get database.
 func (c *Client) Get(name string) (*DatabaseInfo, error) {
-	body, err := request("GET", c.Url+name, nil)
+	url := fmt.Sprintf("%s%s", c.Url, name)
+	body, err := request("GET", url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +54,8 @@ func (c *Client) Get(name string) (*DatabaseInfo, error) {
 
 // Create database.
 func (c *Client) Create(name string) (*DatabaseResponse, error) {
-	body, err := request("PUT", c.Url+name, nil)
+	url := fmt.Sprintf("%s%s", c.Url, name)
+	body, err := request("PUT", url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +64,8 @@ func (c *Client) Create(name string) (*DatabaseResponse, error) {
 
 // Delete database.
 func (c *Client) Delete(name string) (*DatabaseResponse, error) {
-	body, err := request("DELETE", c.Url+name, nil)
+	url := fmt.Sprintf("%s%s", c.Url, name)
+	body, err := request("DELETE", url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
