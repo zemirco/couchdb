@@ -20,12 +20,14 @@ func mimeType(name string) string {
 
 // Make HTTP request.
 // Treat status code other than 2xx as Error.
-func request(method, url string, data io.Reader) ([]byte, error) {
+func request(method, url string, data io.Reader, contentType string) ([]byte, error) {
 	req, err := http.NewRequest(method, url, data)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
 	client := &http.Client{}
 	res, err := client.Do(req)
 	if err != nil {
@@ -114,7 +116,7 @@ func writeMultipart(writer *multipart.Writer, file *os.File) error {
 		return err
 	}
 
-	// copy file contents into multipart message
+	// copy file content into multipart message
 	_, err = io.Copy(part, file)
 	if err != nil {
 		return err
