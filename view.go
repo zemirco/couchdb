@@ -13,7 +13,8 @@ func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	uri := fmt.Sprintf("%s_view/%s?%s", v.Url, name, q.Encode())
+	quoted := quote(q)
+	uri := fmt.Sprintf("%s_view/%s?%s", v.Url, name, quoted.Encode())
 	body, err := request("GET", uri, nil, "")
 	if err != nil {
 		return nil, err
@@ -35,7 +36,8 @@ func (v *View) Post(name string, keys []string, params QueryParameters) (*ViewRe
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("%s_view/%s?%s", v.Url, name, q.Encode())
+	quoted := quote(q)
+	url := fmt.Sprintf("%s_view/%s?%s", v.Url, name, quoted.Encode())
 	data := bytes.NewReader(res)
 	body, err := request("GET", url, data, "application/json")
 	if err != nil {
