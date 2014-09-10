@@ -59,6 +59,13 @@ type Document struct {
 	Attachments map[string]Attachment `json:"_attachments,omitempty"`
 }
 
+// http://docs.couchdb.org/en/latest/api/document/common.html#creating-multiple-attachments
+type Attachment struct {
+	Follows     bool   `json:"follows"`
+	ContentType string `json:"content_type"`
+	Length      int64  `json:"length"`
+}
+
 type CouchDoc interface {
 	GetDocument() *Document
 }
@@ -83,9 +90,48 @@ type Task struct {
 	UpdatedOn    string `json:"updated_on"`
 }
 
-// http://docs.couchdb.org/en/latest/api/document/common.html#creating-multiple-attachments
-type Attachment struct {
-	Follows     bool   `json:"follows"`
-	ContentType string `json:"content_type"`
-	Length      int64  `json:"length"`
+type View struct {
+	Url string
+}
+
+type QueryParameters struct {
+	Conflicts       bool   `url:"conflicts,omitempty"`
+	Descending      bool   `url:"descending,omitempty"`
+	EndKey          string `url:"endkey,omitempty"`
+	EndKeyDocId     string `url:"end_key_doc_id,omitempty"`
+	Group           bool   `url:"group,omitempty"`
+	GroupLevel      int    `url:"group_level,omitempty"`
+	IncludeDocs     bool   `url:"include_docs,omitempty"`
+	Attachments     bool   `url:"attachments,omitempty"`
+	AttEncodingInfo bool   `url:"att_encoding_info,omitempty"`
+	InclusiveEnd    bool   `url:"inclusive_end,omitempty"`
+	Key             string `url:"key,omitempty"`
+	limit           int    `url:"limit,omitempty"`
+	Reduce          bool   `url:"reduce,omitempty"`
+	skip            int    `url:"skip,omitempty"`
+	Stale           string `url:"stale,omitempty"`
+	StartKey        string `url:"startkey,omitempty"`
+	StartKeyDocId   string `url:"startkey_docid,omitempty"`
+	UpdateSeq       bool   `url:"update_seq,omitempty"`
+}
+
+type ViewResponse struct {
+	Offset    int   `json:"offset,omitempty"`
+	Rows      []Row `json:"rows,omitempty"`
+	TotalRows int   `json:"total_rows,omitempty"`
+	UpdateSeq int   `json:"update_seq,omitempty"`
+}
+
+type Row struct {
+	Id    string                 `json:"id"`
+	Key   interface{}            `json:"key"`
+	Value interface{}            `json:"value,omitempty"`
+	Doc   map[string]interface{} `json:"doc,omitempty"`
+}
+
+// http://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_bulk_docs
+type BulkDoc struct {
+	AllOrNothing bool        `json:"all_or_nothing,omitempty"`
+	Docs         []*CouchDoc `json:"docs"`
+	NewEdits     bool        `json:"new_edits,omitempty"`
 }
