@@ -97,17 +97,19 @@ func TestViewGet(t *testing.T) {
 	}
 }
 
-// func TestViewGetWithQueryParameters(t *testing.T) {
-//   view := db_view.View("test")
-//   params := QueryParameters{
-//     Key: "foo1",
-//   }
-//   res, err := view.Get("foo", params)
-//   if err != nil {
-//     t.Fatal(err)
-//   }
-//   t.Log(res)
-// }
+func TestViewGetWithQueryParameters(t *testing.T) {
+  view := db_view.View("test")
+  params := QueryParameters{
+    Key: "\"foo1\"",
+  }
+  res, err := view.Get("foo", params)
+  if err != nil {
+    t.Fatal(err)
+  }
+	if len(res.Rows) != 1 {
+		t.Error("view get error")
+	}
+}
 
 func TestViewAfter(t *testing.T) {
 	t.Log("deleting test data for view tests...")
