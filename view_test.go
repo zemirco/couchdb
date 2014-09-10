@@ -100,7 +100,7 @@ func TestViewGet(t *testing.T) {
 func TestViewGetWithQueryParameters(t *testing.T) {
 	view := db_view.View("test")
 	params := QueryParameters{
-		Key: "\"foo1\"",
+		Key: "foo1",
 	}
 	res, err := view.Get("foo", params)
 	if err != nil {
