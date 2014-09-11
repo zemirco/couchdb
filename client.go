@@ -31,7 +31,7 @@ func (c *Client) ActiveTasks() ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
-	var tasks []Task
+	tasks := []Task{}
 	return tasks, json.Unmarshal(body, &tasks)
 }
 
@@ -42,7 +42,7 @@ func (c *Client) All() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var data []string
+	data := []string{}
 	return data, json.Unmarshal(body, &data)
 }
 
@@ -53,7 +53,7 @@ func (c *Client) Get(name string) (*DatabaseInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	var dbInfo *DatabaseInfo
+	dbInfo := &DatabaseInfo{}
 	return dbInfo, json.Unmarshal(body, &dbInfo)
 }
 
