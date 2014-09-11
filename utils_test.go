@@ -12,12 +12,12 @@ var quoteTests = []struct {
 	out url.Values
 }{
 	{
-		url.Values{"key": []string{"value"}},
-		url.Values{"key": []string{"\"value\""}},
+		url.Values{"key": {`value`}},
+		url.Values{"key": {`"value"`}},
 	},
 	{
-		url.Values{"descending": []string{"true"}},
-		url.Values{"descending": []string{"\"true\""}},
+		url.Values{"descending": {`true`}},
+		url.Values{"descending": {`"true"`}},
 	},
 }
 
