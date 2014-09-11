@@ -49,7 +49,7 @@ func request(method, url string, data io.Reader, contentType string) ([]byte, er
 
 // Convert HTTP response from CouchDB into Error.
 func newError(res *http.Response, body []byte) error {
-	var error *Error
+	error := &Error{}
 	err := json.Unmarshal(body, &error)
 	if err != nil {
 		return err
@@ -62,13 +62,13 @@ func newError(res *http.Response, body []byte) error {
 
 // Create new CouchDB response for any document method.
 func newDocumentResponse(body []byte) (*DocumentResponse, error) {
-	var response *DocumentResponse
+	response := &DocumentResponse{}
 	return response, json.Unmarshal(body, &response)
 }
 
 // Create new CouchDB response for any database method.
 func newDatabaseResponse(body []byte) (*DatabaseResponse, error) {
-	var response *DatabaseResponse
+	response := &DatabaseResponse{}
 	return response, json.Unmarshal(body, &response)
 }
 

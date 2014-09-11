@@ -47,6 +47,6 @@ func (v *View) Post(name string, keys []string, params QueryParameters) (*ViewRe
 }
 
 func newViewResponse(body []byte) (*ViewResponse, error) {
-	var response *ViewResponse
+	response := &ViewResponse{}
 	return response, json.Unmarshal(body, &response)
 }

@@ -85,7 +85,7 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 	defer file.Close()
 
 	// create new writer
-	var buffer bytes.Buffer
+	buffer := bytes.Buffer{}
 	writer := multipart.NewWriter(&buffer)
 
 	// create first "application/json" document part
