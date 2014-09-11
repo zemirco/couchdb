@@ -131,7 +131,7 @@ type Row struct {
 
 // http://docs.couchdb.org/en/latest/api/database/bulk-api.html#post--db-_bulk_docs
 type BulkDoc struct {
-	AllOrNothing bool        `json:"all_or_nothing,omitempty"`
-	Docs         []*CouchDoc `json:"docs"`
-	NewEdits     bool        `json:"new_edits,omitempty"`
+	AllOrNothing bool          `json:"all_or_nothing,omitempty"`
+	Docs         []interface{} `json:"docs"`
+	NewEdits     bool          `json:"new_edits,omitempty"`
 }
