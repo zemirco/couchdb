@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"reflect"
 )
 
 type Database struct {
@@ -118,24 +119,31 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 // at the same time within a single request. The basic operation is similar to
 // creating or updating a single document, except that you batch
 // the document structure and information.
-// func (db *Database) BulkDocs(docs []*CouchDoc) error {
-// 	bulk := BulkDoc{
-// 		Docs: docs,
-// 	}
-// 	res, err := json.Marshal(bulk)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	url := fmt.Sprintf("%s_bulk_docs", db.Url)
-// 	data := bytes.NewReader(res)
-// 	body, err := request("POST", url, data, "application/json")
-// 	fmt.Println(string(body))
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
-//
+func (db *Database) BulkDocs(docs interface{}) ([]DocumentResponse, error) {
+	// convert to []interface{}
+	val := reflect.ValueOf(docs)
+	documents := make([]interface{}, val.Len())
+	for i := 0; i < val.Len(); i++ {
+		documents[i] = val.Index(i).Interface()
+	}
+	// create bulk docs
+	bulk := BulkDoc{
+		Docs: documents,
+	}
+	res, err := json.Marshal(bulk)
+	if err != nil {
+		return nil, err
+	}
+	url := fmt.Sprintf("%s_bulk_docs", db.Url)
+	data := bytes.NewReader(res)
+	body, err := request("POST", url, data, "application/json")
+	if err != nil {
+		return nil, err
+	}
+	response := []DocumentResponse{}
+	return response, json.Unmarshal(body, &response)
+}
+
 // Use view document.
 func (db *Database) View(name string) View {
 	url := fmt.Sprintf("%s_design/%s/", db.Url, name)

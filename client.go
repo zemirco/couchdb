@@ -11,12 +11,17 @@ func (c *Client) Info() (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	var server *Server
-	err = json.Unmarshal(body, &server)
+	server := &Server{}
+	return server, json.Unmarshal(body, &server)
+}
+
+func (c *Client) Log() (string, error) {
+	url := fmt.Sprintf("%s_log", c.Url)
+	body, err := request("GET", url, nil, "")
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return server, nil
+	return (string(body)), nil
 }
 
 // List of running tasks.

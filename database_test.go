@@ -119,6 +119,29 @@ func TestDocumentPutAttachment(t *testing.T) {
 	}
 }
 
+func TestDocumentBulkDocs(t *testing.T) {
+	// first dummy document
+	doc1 := DummyDocument{
+		Foo:  "foo1",
+		Beep: "beep1",
+	}
+	// second dummy document
+	doc2 := DummyDocument{
+		Foo:  "foo2",
+		Beep: "beep2",
+	}
+	// slice of dummy document
+	docs := []DummyDocument{doc1, doc2}
+
+	res, err := db.BulkDocs(docs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res[0].Ok != true || res[1].Ok != true {
+		t.Error("bulk docs error")
+	}
+}
+
 func TestAfter(t *testing.T) {
 	t.Log("deleting dummy database")
 	_, err := client.Delete("dummy")

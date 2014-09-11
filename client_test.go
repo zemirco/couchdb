@@ -2,6 +2,7 @@ package couchdb
 
 import (
 	"reflect"
+	"regexp"
 	"testing"
 )
 
@@ -14,6 +15,17 @@ func TestInfo(t *testing.T) {
 	}
 	if info.Couchdb != "Welcome" {
 		t.Error("Couchdb error")
+	}
+}
+
+func TestLog(t *testing.T) {
+	log, err := client.Log()
+	if err != nil {
+		t.Fatal(err)
+	}
+	valid := regexp.MustCompile("[info]")
+	if valid.MatchString(log) == false {
+		t.Error("invalid log")
 	}
 }
 
