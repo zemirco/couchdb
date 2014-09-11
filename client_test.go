@@ -71,9 +71,6 @@ func TestCreate(t *testing.T) {
 	if status.Ok != true {
 		t.Error("status error")
 	}
-	if status.Error != "" || status.Reason != "" {
-		t.Error("error and reason error")
-	}
 }
 
 func TestCreateFail(t *testing.T) {
@@ -90,9 +87,6 @@ func TestDelete(t *testing.T) {
 	}
 	if status.Ok != true {
 		t.Error("status error")
-	}
-	if status.Error != "" || status.Reason != "" {
-		t.Error("error and reason error")
 	}
 }
 
