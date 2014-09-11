@@ -37,8 +37,6 @@ type DatabaseInfo struct {
 
 type DatabaseResponse struct {
 	Ok     bool
-	Error  string
-	Reason string
 }
 
 type Error struct {
