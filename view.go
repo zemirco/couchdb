@@ -7,6 +7,11 @@ import (
 	"github.com/google/go-querystring/query"
 )
 
+type View struct {
+	Url string
+	*Database
+}
+
 // Execute specified view function from specified design document.
 func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 	q, err := query.Values(params)
@@ -15,7 +20,7 @@ func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 	}
 	quoted := quote(q)
 	uri := fmt.Sprintf("%s_view/%s?%s", v.Url, name, quoted.Encode())
-	body, err := request("GET", uri, nil, "")
+	body, err := v.Database.Client.request("GET", uri, nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +44,7 @@ func (v *View) Post(name string, keys []string, params QueryParameters) (*ViewRe
 	quoted := quote(q)
 	url := fmt.Sprintf("%s_view/%s?%s", v.Url, name, quoted.Encode())
 	data := bytes.NewReader(res)
-	body, err := request("GET", url, data, "application/json")
+	body, err := v.Database.Client.request("GET", url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
