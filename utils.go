@@ -3,7 +3,7 @@ package couchdb
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
+	// "io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -20,33 +20,6 @@ func mimeType(name string) string {
 	return mime.TypeByExtension(ext)
 }
 
-// Make HTTP request.
-// Treat status code other than 2xx as Error.
-func request(method, url string, data io.Reader, contentType string) ([]byte, error) {
-	req, err := http.NewRequest(method, url, data)
-	if err != nil {
-		return nil, err
-	}
-	if contentType != "" {
-		req.Header.Set("Content-Type", contentType)
-	}
-	client := &http.Client{}
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	// handle CouchDB http errors
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, newError(res, body)
-	}
-	return body, nil
-}
-
 // Convert HTTP response from CouchDB into Error.
 func newError(res *http.Response, body []byte) error {
 	error := &Error{}
@@ -58,6 +31,14 @@ func newError(res *http.Response, body []byte) error {
 	error.Url = res.Request.URL.String()
 	error.StatusCode = res.StatusCode
 	return error
+}
+
+// Quote all values because CouchDB needs those double quotes in query params.
+func quote(values url.Values) url.Values {
+	for key, value := range values {
+		values.Set(key, strconv.Quote(value[0]))
+	}
+	return values
 }
 
 // Create new CouchDB response for any document method.
@@ -125,12 +106,4 @@ func writeMultipart(writer *multipart.Writer, file *os.File) error {
 	}
 
 	return nil
-}
-
-// Quote all values because CouchDB needs those double quotes in query params.
-func quote(values url.Values) url.Values {
-	for key, value := range values {
-		values.Set(key, strconv.Quote(value[0]))
-	}
-	return values
 }
