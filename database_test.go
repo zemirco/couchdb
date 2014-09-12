@@ -15,7 +15,7 @@ func (doc *DummyDocument) GetDocument() *Document {
 }
 
 // init client and test database
-var c = Client{"http://127.0.0.1:5984/"}
+var c, _ = NewClient("http://127.0.0.1:5984/")
 var db = c.Use("dummy")
 
 func TestBefore(t *testing.T) {
@@ -133,7 +133,7 @@ func TestDocumentBulkDocs(t *testing.T) {
 	// slice of dummy document
 	docs := []DummyDocument{doc1, doc2}
 
-	res, err := db.BulkDocs(docs)
+	res, err := db.Bulk(docs)
 	if err != nil {
 		t.Fatal(err)
 	}

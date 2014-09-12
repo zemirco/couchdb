@@ -24,7 +24,7 @@ func (doc *DataDocument) GetDocument() *Document {
 	return &doc.Document
 }
 
-var c_view = Client{"http://127.0.0.1:5984/"}
+var c_view, _ = NewClient("http://127.0.0.1:5984/")
 var db_view = c_view.Use("gotest")
 
 func TestViewBefore(t *testing.T) {

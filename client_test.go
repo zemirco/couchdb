@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var client = Client{"http://127.0.0.1:5984/"}
+var client, _ = NewClient("http://127.0.0.1:5984/")
 
 func TestInfo(t *testing.T) {
 	info, err := client.Info()
@@ -98,11 +98,8 @@ func TestDeleteFail(t *testing.T) {
 }
 
 func TestUse(t *testing.T) {
-	out := Database{
-		Url: "http://127.0.0.1:5984/_users/",
-	}
 	db := client.Use("_users")
-	if reflect.DeepEqual(out, db) == false {
+	if db.Url != "http://127.0.0.1:5984/_users/" {
 		t.Error("use error")
 	}
 }
