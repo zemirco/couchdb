@@ -11,6 +11,7 @@ import (
 )
 
 type Database struct {
+	*Client
 	Url string
 }
 
@@ -22,7 +23,7 @@ func (db *Database) Head(id string) (*http.Response, error) {
 // Get document.
 func (db *Database) Get(doc CouchDoc, id string) error {
 	url := fmt.Sprintf("%s%s", db.Url, id)
-	body, err := request("GET", url, nil, "application/json")
+	body, err := db.Client.request("GET", url, nil, "application/json")
 	if err != nil {
 		return err
 	}
@@ -38,7 +39,7 @@ func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
 	document := doc.GetDocument()
 	url := fmt.Sprintf("%s%s", db.Url, document.Id)
 	data := bytes.NewReader(res)
-	body, err := request("PUT", url, data, "application/json")
+	body, err := db.Client.request("PUT", url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +53,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 		return nil, err
 	}
 	data := bytes.NewReader(res)
-	body, err := request("POST", db.Url, data, "application/json")
+	body, err := db.Client.request("POST", db.Url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	document := doc.GetDocument()
 	url := fmt.Sprintf("%s%s?rev=%s", db.Url, document.Id, document.Rev)
-	body, err := request("DELETE", url, nil, "application/json")
+	body, err := db.Client.request("DELETE", url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,7 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 
 	// create http request
 	contentType := fmt.Sprintf("multipart/related; boundary=%q", writer.Boundary())
-	body, err := request("PUT", url, &buffer, contentType)
+	body, err := db.Client.request("PUT", url, &buffer, contentType)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +120,7 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 // at the same time within a single request. The basic operation is similar to
 // creating or updating a single document, except that you batch
 // the document structure and information.
-func (db *Database) BulkDocs(docs interface{}) ([]DocumentResponse, error) {
+func (db *Database) Bulk(docs interface{}) ([]DocumentResponse, error) {
 	// convert to []interface{}
 	val := reflect.ValueOf(docs)
 	documents := make([]interface{}, val.Len())
@@ -136,7 +137,7 @@ func (db *Database) BulkDocs(docs interface{}) ([]DocumentResponse, error) {
 	}
 	url := fmt.Sprintf("%s_bulk_docs", db.Url)
 	data := bytes.NewReader(res)
-	body, err := request("POST", url, data, "application/json")
+	body, err := db.Client.request("POST", url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -147,5 +148,8 @@ func (db *Database) BulkDocs(docs interface{}) ([]DocumentResponse, error) {
 // Use view document.
 func (db *Database) View(name string) View {
 	url := fmt.Sprintf("%s_design/%s/", db.Url, name)
-	return View{url}
+	return View{
+		Url:      url,
+		Database: db,
+	}
 }
