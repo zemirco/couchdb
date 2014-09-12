@@ -4,11 +4,6 @@ import (
 	"fmt"
 )
 
-// Create a new client.
-type Client struct {
-	Url string
-}
-
 // http://docs.couchdb.org/en/latest/intro/api.html#server
 type Server struct {
 	Couchdb string
@@ -36,7 +31,7 @@ type DatabaseInfo struct {
 }
 
 type DatabaseResponse struct {
-	Ok     bool
+	Ok bool
 }
 
 type Error struct {
@@ -88,10 +83,6 @@ type Task struct {
 	UpdatedOn    string `json:"updated_on"`
 }
 
-type View struct {
-	Url string
-}
-
 type QueryParameters struct {
 	Conflicts       bool   `url:"conflicts,omitempty"`
 	Descending      bool   `url:"descending,omitempty"`
@@ -132,4 +123,60 @@ type BulkDoc struct {
 	AllOrNothing bool          `json:"all_or_nothing,omitempty"`
 	Docs         []interface{} `json:"docs"`
 	NewEdits     bool          `json:"new_edits,omitempty"`
+}
+
+// http://docs.couchdb.org/en/latest/api/server/authn.html#cookie-authentication
+type Credentials struct {
+	Name     string `json:"name"`
+	Password string `json:"password"`
+}
+
+type PostSessionResponse struct {
+	Ok    bool
+	Name  string
+	Roles []string
+}
+
+type User struct {
+	Document
+	DerivedKey     string   `json:"derived_key,omitempty"`
+	Name           string   `json:"name,omitempty"`
+	Roles          []string `json:"roles"`
+	Password       string   `json:"password,omitempty"`     // plain text password when creating the user
+	PasswordSha    string   `json:"password_sha,omitempty"` // hashed password when requesting user information
+	PasswordScheme string   `json:"password_scheme,omitempty"`
+	Salt           string   `json:"salt,omitempty"`
+	Type           string   `json:"type,omitempty"`
+	Iterations     int      `json:"iterations,omitempty"`
+}
+
+func NewUser(name, password string, roles []string) User {
+	user := User{
+		Document: Document{
+			Id: "org.couchdb.user:" + name,
+		},
+		DerivedKey:     "",
+		Name:           name,
+		Roles:          roles,
+		Password:       password,
+		PasswordSha:    "",
+		PasswordScheme: "",
+		Salt:           "",
+		Type:           "user",
+	}
+	return user
+}
+
+type GetSessionResponse struct {
+	Info struct {
+		Authenticated          string   `json:"authenticated"`
+		AuthenticationDb       string   `json:"authentication_db"`
+		AuthenticationHandlers []string `json:"authentication_handlers"`
+	} `json:"info"`
+	Ok          bool `json:"ok"`
+	UserContext struct {
+		Db    string   `json:"db"`
+		Name  string   `json:"name"`
+		Roles []string `json:"roles"`
+	} `json:"userCtx"`
 }
