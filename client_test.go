@@ -80,6 +80,17 @@ func TestCreateFail(t *testing.T) {
 	}
 }
 
+func TestCreateUser(t *testing.T) {
+	user := NewUser("john", "password", []string{})
+	res, err := client.CreateUser(user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Ok == false || res.Id != "org.couchdb.user:john" {
+		t.Error("create user error")
+	}
+}
+
 func TestDelete(t *testing.T) {
 	status, err := client.Delete("dummy")
 	if err != nil {
