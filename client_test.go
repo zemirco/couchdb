@@ -91,6 +91,50 @@ func TestCreateUser(t *testing.T) {
 	}
 }
 
+// func TestCreateSession(t *testing.T) {
+// 	res, err := client.CreateSession("john", "password")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if res.Ok == false || res.Name != "john" {
+// 		t.Error("create session error")
+// 	}
+// }
+//
+// func TestGetSession(t *testing.T) {
+// 	session, err := client.GetSession()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if session.Ok == false || session.UserContext.Name != "john" {
+// 		t.Error("get session error")
+// 	}
+// }
+//
+// func TestDeleteSession(t *testing.T) {
+// 	res, err := c.DeleteSession()
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	if res.Ok == false {
+// 		t.Error("delete session error")
+// 	}
+// }
+
+func TestGetSessionAdmin(t *testing.T) {
+	session, err := client.GetSession()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if session.Ok == false {
+		t.Error("session response is false")
+	}
+	roles := []string{"_admin"}
+	if reflect.DeepEqual(roles, session.UserContext.Roles) == false {
+		t.Error("session roles are wrong")
+	}
+}
+
 func TestDelete(t *testing.T) {
 	status, err := client.Delete("dummy")
 	if err != nil {
