@@ -16,13 +16,18 @@ package main
 
 import "github.com/zemirco/couchdb"
 
-func main() {
-  client := couchdb.Client{"http://127.0.0.1:5984/"}
-
-  info, err := client.Info()
+func check(err) {
   if err != nil {
     panic(err)
   }
+}
+
+func main() {
+  client, err := NewClient("http://127.0.0.1:5984/")
+  check(err)
+
+  info, err := client.Info()
+  check(err)
 }
 ```
 
