@@ -16,7 +16,7 @@ package main
 
 import "github.com/zemirco/couchdb"
 
-func check(err) {
+func check(err error) {
   if err != nil {
     panic(err)
   }
