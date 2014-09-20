@@ -111,6 +111,11 @@ func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
 	return newDocumentResponse(body)
 }
 
+// Delete user.
+// func (c *Client) DeleteUser(user User) () {
+//
+// }
+
 // Create session.
 func (c *Client) CreateSession(name, password string) (*PostSessionResponse, error) {
 	url := fmt.Sprintf("%s_session", c.Url)
