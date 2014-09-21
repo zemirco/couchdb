@@ -111,10 +111,22 @@ func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
 	return newDocumentResponse(body)
 }
 
+// Get user.
+func (c *Client) GetUser(name string) (*User, error) {
+	url := fmt.Sprintf("%s_users/org.couchdb.user:%s", c.Url, name)
+	body, err := c.request("GET", url, nil, "application/json")
+	if err != nil {
+		return nil, err
+	}
+	user := &User{}
+	return user, json.Unmarshal(body, &user)
+}
+
 // Delete user.
-// func (c *Client) DeleteUser(user User) () {
-//
-// }
+func (c *Client) DeleteUser(user User) (*DocumentResponse, error) {
+	db := c.Use("_users")
+	return db.Delete(user)
+}
 
 // Create session.
 func (c *Client) CreateSession(name, password string) (*PostSessionResponse, error) {
