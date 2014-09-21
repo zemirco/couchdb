@@ -33,8 +33,8 @@ func main() {
 }
 ```
 
-For more see
-[example/example.go](https://github.com/zemirco/couchdb/blob/master/example/example.go).
+More
+[examples](https://github.com/zemirco/couchdb/blob/master/example/example.go).
 
 ## Test
 
