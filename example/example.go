@@ -1,7 +1,7 @@
 package main
 
 import (
-  ".."
+  "import github.com/zemirco/couchdb"
   "fmt"
 )
 
