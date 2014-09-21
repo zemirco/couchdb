@@ -1,8 +1,8 @@
 
-# go-relax
+# couchdb
 
-[![Build Status](https://travis-ci.org/zemirco/go-relax.svg)](https://travis-ci.org/zemirco/go-relax)
-[![GoDoc](https://godoc.org/github.com/zemirco/go-relax?status.svg)](https://godoc.org/github.com/zemirco/go-relax)
+[![Build Status](https://travis-ci.org/zemirco/couchdb.svg)](https://travis-ci.org/zemirco/couchdb)
+[![GoDoc](https://godoc.org/github.com/zemirco/couchdb?status.svg)](https://godoc.org/github.com/zemirco/couchdb)
 
 CouchDB client for Go.
 
@@ -34,7 +34,7 @@ func main() {
 ```
 
 For more see
-[example/example.go](https://github.com/zemirco/go-relax/blob/master/example/example.go).
+[example/example.go](https://github.com/zemirco/couchdb/blob/master/example/example.go).
 
 ## Test
 
