@@ -121,6 +121,30 @@ func TestDeleteSession(t *testing.T) {
 	}
 }
 
+func TestGetUser(t *testing.T) {
+	user, err := client.GetUser("john")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if user.Name != "john" || user.Type != "user" || user.Iterations != 10 {
+		t.Error("get user error")
+	}
+}
+
+func TestDeleteUser(t *testing.T) {
+	user, err := client.GetUser("john")
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := client.DeleteUser(*user)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Ok == false || res.Id != "org.couchdb.user:john" {
+		t.Error("delete user error")
+	}
+}
+
 func TestGetSessionAdmin(t *testing.T) {
 	session, err := client.GetSession()
 	if err != nil {
