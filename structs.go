@@ -150,6 +150,10 @@ type User struct {
 	Iterations     int      `json:"iterations,omitempty"`
 }
 
+func (user User) GetDocument() *Document {
+	return &user.Document
+}
+
 func NewUser(name, password string, roles []string) User {
 	user := User{
 		Document: Document{
