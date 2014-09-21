@@ -3,9 +3,7 @@
 
 [![Build Status](https://travis-ci.org/zemirco/go-relax.svg)](https://travis-ci.org/zemirco/go-relax)
 
-CouchDB client written in Go.
-
-work in progress ...
+CouchDB client for Go.
 
 Check out the [docs](https://godoc.org/github.com/zemirco/go-relax).
 
