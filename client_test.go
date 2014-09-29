@@ -74,8 +74,11 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateFail(t *testing.T) {
-	_, err := client.Create("dummy")
-	if err == nil {
+	res, err := client.Create("dummy")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.Ok == true {
 		t.Fatal("should not create duplicate database")
 	}
 }
@@ -170,8 +173,11 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteFail(t *testing.T) {
-	_, err := client.Delete("dummy")
-	if err == nil {
+	res, err := client.Delete("dummy")
+	if err != nil {
+		t.Fatal("should not delete non existing database")
+	}
+	if res.Ok == true {
 		t.Fatal("should not delete non existing database")
 	}
 }
