@@ -197,9 +197,5 @@ func (c *Client) request(method, url string, data io.Reader, contentType string)
 	if err != nil {
 		return nil, err
 	}
-	// handle CouchDB http errors
-	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return nil, newError(res, body)
-	}
 	return body, nil
 }
