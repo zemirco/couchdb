@@ -175,7 +175,7 @@ func TestDelete(t *testing.T) {
 func TestDeleteFail(t *testing.T) {
 	res, err := client.Delete("dummy")
 	if err != nil {
-		t.Fatal("should not delete non existing database")
+		t.Fatal(err)
 	}
 	if res.Ok == true {
 		t.Fatal("should not delete non existing database")
