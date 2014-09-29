@@ -33,10 +33,12 @@ func newError(res *http.Response, body []byte) error {
 	return error
 }
 
-// Quote all values because CouchDB needs those double quotes in query params.
+// Quote string values because CouchDB needs those double quotes in query params.
 func quote(values url.Values) url.Values {
 	for key, value := range values {
-		values.Set(key, strconv.Quote(value[0]))
+		if value[0] != "true" && value[0] != "false" {
+			values.Set(key, strconv.Quote(value[0]))
+		}
 	}
 	return values
 }

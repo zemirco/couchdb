@@ -17,7 +17,7 @@ var quoteTests = []struct {
 	},
 	{
 		url.Values{"descending": {`true`}},
-		url.Values{"descending": {`"true"`}},
+		url.Values{"descending": {`true`}},
 	},
 }
 
