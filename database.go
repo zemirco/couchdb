@@ -27,7 +27,8 @@ func (db *Database) Get(doc CouchDoc, id string) error {
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(body, doc)
+	defer body.Close()
+	return json.NewDecoder(body).Decode(doc)
 }
 
 // Put document.
@@ -43,6 +44,7 @@ func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newDocumentResponse(body)
 }
 
@@ -57,6 +59,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newDocumentResponse(body)
 }
 
@@ -68,6 +71,7 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newDocumentResponse(body)
 }
 
@@ -113,6 +117,7 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newDocumentResponse(body)
 }
 
@@ -141,8 +146,10 @@ func (db *Database) Bulk(docs interface{}) ([]DocumentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	response := []DocumentResponse{}
-	return response, json.Unmarshal(body, &response)
+	return response, json.NewDecoder(body).Decode(&response)
+
 }
 
 // Use view document.

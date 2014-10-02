@@ -30,8 +30,9 @@ func (c *Client) Info() (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	server := &Server{}
-	return server, json.Unmarshal(body, &server)
+	return server, json.NewDecoder(body).Decode(&server)
 }
 
 func (c *Client) Log() (string, error) {
@@ -40,7 +41,12 @@ func (c *Client) Log() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return (string(body)), nil
+	defer body.Close()
+	log, err := ioutil.ReadAll(body)
+	if err != nil {
+		return "", err
+	}
+	return (string(log)), nil
 }
 
 // List of running tasks.
@@ -50,8 +56,9 @@ func (c *Client) ActiveTasks() ([]Task, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	tasks := []Task{}
-	return tasks, json.Unmarshal(body, &tasks)
+	return tasks, json.NewDecoder(body).Decode(&tasks)
 }
 
 // Get all databases.
@@ -61,8 +68,9 @@ func (c *Client) All() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	data := []string{}
-	return data, json.Unmarshal(body, &data)
+	return data, json.NewDecoder(body).Decode(&data)
 }
 
 // Get database.
@@ -72,8 +80,9 @@ func (c *Client) Get(name string) (*DatabaseInfo, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	dbInfo := &DatabaseInfo{}
-	return dbInfo, json.Unmarshal(body, &dbInfo)
+	return dbInfo, json.NewDecoder(body).Decode(&dbInfo)
 }
 
 // Create database.
@@ -83,6 +92,7 @@ func (c *Client) Create(name string) (*DatabaseResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newDatabaseResponse(body)
 }
 
@@ -93,6 +103,7 @@ func (c *Client) Delete(name string) (*DatabaseResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newDatabaseResponse(body)
 }
 
@@ -108,6 +119,7 @@ func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newDocumentResponse(body)
 }
 
@@ -118,8 +130,9 @@ func (c *Client) GetUser(name string) (*User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	user := &User{}
-	return user, json.Unmarshal(body, &user)
+	return user, json.NewDecoder(body).Decode(&user)
 }
 
 // Delete user.
@@ -141,8 +154,9 @@ func (c *Client) CreateSession(name, password string) (*PostSessionResponse, err
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	sessionResponse := &PostSessionResponse{}
-	return sessionResponse, json.Unmarshal(body, &sessionResponse)
+	return sessionResponse, json.NewDecoder(body).Decode(&sessionResponse)
 }
 
 // Get session.
@@ -152,8 +166,9 @@ func (c *Client) GetSession() (*GetSessionResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	sessionResponse := &GetSessionResponse{}
-	return sessionResponse, json.Unmarshal(body, &sessionResponse)
+	return sessionResponse, json.NewDecoder(body).Decode(&sessionResponse)
 }
 
 // Delete session
@@ -163,8 +178,9 @@ func (c *Client) DeleteSession() (*DatabaseResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	databaseResponse := &DatabaseResponse{}
-	return databaseResponse, json.Unmarshal(body, &databaseResponse)
+	return databaseResponse, json.NewDecoder(body).Decode(&databaseResponse)
 }
 
 // Use database.
@@ -176,7 +192,7 @@ func (c *Client) Use(name string) Database {
 }
 
 // internal helper function for http requests
-func (c *Client) request(method, url string, data io.Reader, contentType string) ([]byte, error) {
+func (c *Client) request(method, url string, data io.Reader, contentType string) (io.ReadCloser, error) {
 	req, err := http.NewRequest(method, url, data)
 	if err != nil {
 		return nil, err
@@ -192,10 +208,5 @@ func (c *Client) request(method, url string, data io.Reader, contentType string)
 	}
 	// save new cookies
 	c.CookieJar.SetCookies(req.URL, res.Cookies())
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
+	return res.Body, nil
 }

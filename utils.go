@@ -44,15 +44,15 @@ func quote(values url.Values) url.Values {
 }
 
 // Create new CouchDB response for any document method.
-func newDocumentResponse(body []byte) (*DocumentResponse, error) {
+func newDocumentResponse(body io.ReadCloser) (*DocumentResponse, error) {
 	response := &DocumentResponse{}
-	return response, json.Unmarshal(body, &response)
+	return response, json.NewDecoder(body).Decode(&response)
 }
 
 // Create new CouchDB response for any database method.
-func newDatabaseResponse(body []byte) (*DatabaseResponse, error) {
+func newDatabaseResponse(body io.ReadCloser) (*DatabaseResponse, error) {
 	response := &DatabaseResponse{}
-	return response, json.Unmarshal(body, &response)
+	return response, json.NewDecoder(body).Decode(&response)
 }
 
 // Write JSON to multipart/related.

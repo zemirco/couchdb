@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/go-querystring/query"
+	"io"
 )
 
 type View struct {
@@ -24,6 +25,7 @@ func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newViewResponse(body)
 }
 
@@ -48,10 +50,11 @@ func (v *View) Post(name string, keys []string, params QueryParameters) (*ViewRe
 	if err != nil {
 		return nil, err
 	}
+	defer body.Close()
 	return newViewResponse(body)
 }
 
-func newViewResponse(body []byte) (*ViewResponse, error) {
+func newViewResponse(body io.ReadCloser) (*ViewResponse, error) {
 	response := &ViewResponse{}
-	return response, json.Unmarshal(body, &response)
+	return response, json.NewDecoder(body).Decode(&response)
 }
