@@ -1,6 +1,7 @@
 package couchdb
 
 import (
+	"net/http"
 	"reflect"
 	"regexp"
 	"testing"
@@ -74,12 +75,14 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateFail(t *testing.T) {
-	res, err := client.Create("dummy")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if res.Ok == true {
+	_, err := client.Create("dummy")
+	if err == nil {
 		t.Fatal("should not create duplicate database")
+	}
+	if couchdbError, ok := err.(*Error); ok {
+		if couchdbError.StatusCode != http.StatusPreconditionFailed {
+			t.Fatal("should not create duplicate database")
+		}
 	}
 }
 
@@ -173,12 +176,14 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteFail(t *testing.T) {
-	res, err := client.Delete("dummy")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if res.Ok == true {
+	_, err := client.Delete("dummy")
+	if err == nil {
 		t.Fatal("should not delete non existing database")
+	}
+	if couchdbError, ok := err.(*Error); ok {
+		if couchdbError.StatusCode != http.StatusNotFound {
+			t.Fatal("should not delete non existing database")
+		}
 	}
 }
 

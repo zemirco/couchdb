@@ -3,7 +3,7 @@ package couchdb
 import (
 	"encoding/json"
 	"io"
-	// "io/ioutil"
+	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -21,9 +21,14 @@ func mimeType(name string) string {
 }
 
 // Convert HTTP response from CouchDB into Error.
-func newError(res *http.Response, body []byte) error {
+func newError(res *http.Response) error {
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
 	error := &Error{}
-	err := json.Unmarshal(body, &error)
+	err = json.Unmarshal(body, &error)
 	if err != nil {
 		return err
 	}
