@@ -84,24 +84,24 @@ type Task struct {
 }
 
 type QueryParameters struct {
-	Conflicts       bool   `url:"conflicts,omitempty"`
-	Descending      bool   `url:"descending,omitempty"`
-	EndKey          string `url:"endkey,omitempty"`
-	EndKeyDocId     string `url:"end_key_doc_id,omitempty"`
-	Group           bool   `url:"group,omitempty"`
-	GroupLevel      int    `url:"group_level,omitempty"`
-	IncludeDocs     bool   `url:"include_docs,omitempty"`
-	Attachments     bool   `url:"attachments,omitempty"`
-	AttEncodingInfo bool   `url:"att_encoding_info,omitempty"`
-	InclusiveEnd    bool   `url:"inclusive_end,omitempty"`
-	Key             string `url:"key,omitempty"`
-	limit           int    `url:"limit,omitempty"`
-	Reduce          bool   `url:"reduce,omitempty"`
-	skip            int    `url:"skip,omitempty"`
-	Stale           string `url:"stale,omitempty"`
-	StartKey        string `url:"startkey,omitempty"`
-	StartKeyDocId   string `url:"startkey_docid,omitempty"`
-	UpdateSeq       bool   `url:"update_seq,omitempty"`
+	Conflicts       bool          `url:"conflicts,omitempty"`
+	Descending      bool          `url:"descending,omitempty"`
+	EndKey          []interface{} `url:"endkey,comma,omitempty"`
+	EndKeyDocId     string        `url:"end_key_doc_id,omitempty"`
+	Group           bool          `url:"group,omitempty"`
+	GroupLevel      int           `url:"group_level,omitempty"`
+	IncludeDocs     bool          `url:"include_docs,omitempty"`
+	Attachments     bool          `url:"attachments,omitempty"`
+	AttEncodingInfo bool          `url:"att_encoding_info,omitempty"`
+	InclusiveEnd    bool          `url:"inclusive_end,omitempty"`
+	Key             string        `url:"key,omitempty"`
+	Limit           int           `url:"limit,omitempty"`
+	Reduce          bool          `url:"reduce,omitempty"`
+	Skip            int           `url:"skip,omitempty"`
+	Stale           string        `url:"stale,omitempty"`
+	StartKey        []interface{} `url:"startkey,comma,omitempty"`
+	StartKeyDocId   string        `url:"startkey_docid,omitempty"`
+	UpdateSeq       bool          `url:"update_seq,omitempty"`
 }
 
 type ViewResponse struct {
