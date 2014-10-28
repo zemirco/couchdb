@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 // Get mime type from file name.
@@ -41,7 +42,18 @@ func newError(res *http.Response) error {
 // Quote string values because CouchDB needs those double quotes in query params.
 func quote(values url.Values) url.Values {
 	for key, value := range values {
-		if value[0] != "true" && value[0] != "false" {
+		if key == "startkey" || key == "endkey" && value != nil {
+			arr := strings.Split(value[0], ",")
+			for index, element := range arr {
+				_, err := strconv.ParseFloat(element, 64)
+				if err != nil {
+					arr[index] = strconv.Quote(element)
+				}
+			}
+			joined := strings.Join(arr, ",")
+			enclosed := "[" + joined + "]"
+			values.Set(key, enclosed)
+		} else if value[0] != "true" && value[0] != "false" {
 			values.Set(key, strconv.Quote(value[0]))
 		}
 	}
