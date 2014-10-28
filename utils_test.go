@@ -19,6 +19,14 @@ var quoteTests = []struct {
 		url.Values{"descending": {`true`}},
 		url.Values{"descending": {`true`}},
 	},
+	{
+		url.Values{"startkey": {"one,two"}},
+		url.Values{"startkey": {`["one","two"]`}},
+	},
+	{
+		url.Values{"startkey": {"one,20"}},
+		url.Values{"startkey": {`["one",20]`}},
+	},
 }
 
 func TestQuote(t *testing.T) {
