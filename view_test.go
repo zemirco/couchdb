@@ -125,7 +125,7 @@ func TestViewGet(t *testing.T) {
 func TestViewGetWithQueryParameters(t *testing.T) {
 	view := db_view.View("test")
 	params := QueryParameters{
-		Key: "foo1",
+		Key: `"foo1"`,
 	}
 	res, err := view.Get("foo", params)
 	if err != nil {
@@ -139,17 +139,9 @@ func TestViewGetWithQueryParameters(t *testing.T) {
 func TestViewGetWithStartKeyEndKey(t *testing.T) {
 	view := db_view.View("test")
 
-	startkey := make([]interface{}, 2)
-	startkey[0] = "foo2"
-	startkey[1] = "beep2"
-
-	endkey := make([]interface{}, 2)
-	endkey[0] = "foo2"
-	endkey[1] = "beep2"
-
 	params := QueryParameters{
-		StartKey: startkey,
-		EndKey:   endkey,
+		StartKey: `["foo2","beep2"]`,
+		EndKey:   `["foo2","beep2"]`,
 	}
 	res, err := view.Get("complex", params)
 	if err != nil {
@@ -163,17 +155,9 @@ func TestViewGetWithStartKeyEndKey(t *testing.T) {
 func TestViewGetWithInteger(t *testing.T) {
 	view := db_view.View("test")
 
-	startkey := make([]interface{}, 2)
-	startkey[0] = "foo2"
-	startkey[1] = 20
-
-	endkey := make([]interface{}, 2)
-	endkey[0] = "foo2"
-	endkey[1] = 20
-
 	params := QueryParameters{
-		StartKey: startkey,
-		EndKey:   endkey,
+		StartKey: `["foo2",20]`,
+		EndKey:   `["foo2",20]`,
 	}
 	res, err := view.Get("int", params)
 	if err != nil {
