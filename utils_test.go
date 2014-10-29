@@ -1,42 +1,10 @@
 package couchdb
 
 import (
-	"net/url"
-	"reflect"
+	// "net/url"
+	// "reflect"
 	"testing"
 )
-
-// quote()
-var quoteTests = []struct {
-	in  url.Values
-	out url.Values
-}{
-	{
-		url.Values{"key": {`value`}},
-		url.Values{"key": {`"value"`}},
-	},
-	{
-		url.Values{"descending": {`true`}},
-		url.Values{"descending": {`true`}},
-	},
-	{
-		url.Values{"startkey": {"one,two"}},
-		url.Values{"startkey": {`["one","two"]`}},
-	},
-	{
-		url.Values{"startkey": {"one,20"}},
-		url.Values{"startkey": {`["one",20]`}},
-	},
-}
-
-func TestQuote(t *testing.T) {
-	for _, tt := range quoteTests {
-		actual := quote(tt.in)
-		if !reflect.DeepEqual(actual, tt.out) {
-			t.Errorf("quote(%v): expected %v, actual %v", tt.in, tt.out, actual)
-		}
-	}
-}
 
 // mimeType()
 var mimeTypeTests = []struct {
