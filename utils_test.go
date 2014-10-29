@@ -1,8 +1,6 @@
 package couchdb
 
 import (
-	// "net/url"
-	// "reflect"
 	"testing"
 )
 
