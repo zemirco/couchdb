@@ -4,15 +4,6 @@ import (
 	"testing"
 )
 
-type ViewDocument struct {
-	Document
-	Views map[string]interface{} `json:"views"`
-}
-
-func (doc *ViewDocument) GetDocument() *Document {
-	return &doc.Document
-}
-
 type DataDocument struct {
 	Document
 	Type string `json:"type"`
@@ -39,8 +30,8 @@ func TestViewBefore(t *testing.T) {
 
 	// create design document
 	t.Log("creating design document...")
-	view := make(map[string]string)
-	view["map"] =
+	view := DesignDocumentView{}
+	view.Map =
 		`
 		function(doc){
 			if (doc.type == 'data') emit(doc.foo)
@@ -48,8 +39,8 @@ func TestViewBefore(t *testing.T) {
 	`
 	// create a bit more comple design document
 	t.Log("creating complex design document...")
-	complexView := make(map[string]string)
-	complexView["map"] =
+	complexView := DesignDocumentView{}
+	complexView.Map =
 		`
 		function(doc) {
 			if (doc.type === 'data') emit([doc.foo, doc.beep])
@@ -58,20 +49,21 @@ func TestViewBefore(t *testing.T) {
 
 	// create design document with int key
 	t.Log("creating int design document...")
-	intView := make(map[string]string)
-	intView["map"] =
+	intView := DesignDocumentView{}
+	intView.Map =
 		`
 		function(doc) {
 			if (doc.type === 'data') emit([doc.foo, doc.age])
 		}
 		`
 
-	views := make(map[string]interface{})
+	views := make(map[string]DesignDocumentView)
 	views["foo"] = view
 	views["complex"] = complexView
 	views["int"] = intView
 
-	design := &ViewDocument{
+	// views := make(map[string]interface{})
+	design := &DesignDocument{
 		Document: Document{
 			Id: "_design/test",
 		},
@@ -119,6 +111,29 @@ func TestViewGet(t *testing.T) {
 	}
 	if res.TotalRows != 2 || res.Offset != 0 {
 		t.Error("view get error")
+	}
+}
+
+func TestDesignDocumentName(t *testing.T) {
+	doc := new(DesignDocument)
+	err := db_view.Get(doc, "_design/test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Name() != "test" {
+		t.Error("design document Name() error")
+	}
+}
+
+func TestDesignDocumentView(t *testing.T) {
+	doc := new(DesignDocument)
+	err := db_view.Get(doc, "_design/test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, ok := doc.Views["foo"]
+	if ok == false {
+		t.Error("design document view error")
 	}
 }
 
