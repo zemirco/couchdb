@@ -2,6 +2,7 @@ package couchdb
 
 import (
 	"fmt"
+	"strings"
 )
 
 // http://docs.couchdb.org/en/latest/intro/api.html#server
@@ -50,6 +51,25 @@ type Document struct {
 	Id          string                `json:"_id,omitempty"`
 	Rev         string                `json:"_rev,omitempty"`
 	Attachments map[string]Attachment `json:"_attachments,omitempty"`
+}
+
+func (d Document) GetDocument() *Document {
+	return &d
+}
+
+type DesignDocument struct {
+	Document
+	Language string                        `json:"language,omitempty"`
+	Views    map[string]DesignDocumentView `json:"views,omitempty"`
+}
+
+func (dd DesignDocument) Name() string {
+	return strings.TrimPrefix(dd.Id, "_design/")
+}
+
+type DesignDocumentView struct {
+	Map    string `json:"map,omitempty"`
+	Reduce string `json:"reduce,omitempty"`
 }
 
 // http://docs.couchdb.org/en/latest/api/document/common.html#creating-multiple-attachments
@@ -148,10 +168,6 @@ type User struct {
 	Salt           string   `json:"salt,omitempty"`
 	Type           string   `json:"type,omitempty"`
 	Iterations     int      `json:"iterations,omitempty"`
-}
-
-func (user User) GetDocument() *Document {
-	return &user.Document
 }
 
 func NewUser(name, password string, roles []string) User {
