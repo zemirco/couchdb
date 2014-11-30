@@ -10,10 +10,6 @@ type DummyDocument struct {
 	Beep string `json:"beep"`
 }
 
-func (doc *DummyDocument) GetDocument() *Document {
-	return &doc.Document
-}
-
 // init client and test database
 var c, _ = NewClient("http://127.0.0.1:5984/")
 var db = c.Use("dummy")
