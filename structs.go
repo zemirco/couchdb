@@ -44,7 +44,18 @@ type Error struct {
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("CouchDB - %s %s, Status Code: %d, Error: %s, Reason: %s", e.Method, e.Url, e.StatusCode, e.Type, e.Reason)
+	return fmt.Sprintf(
+		"CouchDB - %s %s, Status Code: %d, Error: %s, Reason: %s",
+		e.Method,
+		e.Url,
+		e.StatusCode,
+		e.Type,
+		e.Reason,
+	)
+}
+
+type CouchDoc interface {
+	GetDocument() *Document
 }
 
 type Document struct {
@@ -77,10 +88,6 @@ type Attachment struct {
 	Follows     bool   `json:"follows"`
 	ContentType string `json:"content_type"`
 	Length      int64  `json:"length"`
-}
-
-type CouchDoc interface {
-	GetDocument() *Document
 }
 
 type DocumentResponse struct {
