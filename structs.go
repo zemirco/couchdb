@@ -64,8 +64,8 @@ type Document struct {
 	Attachments map[string]Attachment `json:"_attachments,omitempty"`
 }
 
-func (d Document) GetDocument() *Document {
-	return &d
+func (d *Document) GetDocument() *Document {
+	return d
 }
 
 type DesignDocument struct {
