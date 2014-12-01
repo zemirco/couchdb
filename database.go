@@ -33,12 +33,12 @@ func (db *Database) Get(doc CouchDoc, id string) error {
 
 // Put document.
 func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
+	document := doc.GetDocument()
+	url := fmt.Sprintf("%s%s", db.Url, document.Id)
 	res, err := json.Marshal(doc)
 	if err != nil {
 		return nil, err
 	}
-	document := doc.GetDocument()
-	url := fmt.Sprintf("%s%s", db.Url, document.Id)
 	data := bytes.NewReader(res)
 	body, err := db.Client.request("PUT", url, data, "application/json")
 	if err != nil {
