@@ -142,7 +142,7 @@ func TestDeleteUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, err := client.DeleteUser(*user)
+	res, err := client.DeleteUser(user)
 	if err != nil {
 		t.Fatal(err)
 	}

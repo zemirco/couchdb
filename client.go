@@ -136,7 +136,7 @@ func (c *Client) GetUser(name string) (*User, error) {
 }
 
 // Delete user.
-func (c *Client) DeleteUser(user User) (*DocumentResponse, error) {
+func (c *Client) DeleteUser(user *User) (*DocumentResponse, error) {
 	db := c.Use("_users")
 	return db.Delete(user)
 }
