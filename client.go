@@ -12,6 +12,8 @@ import (
 
 // Create a new client.
 type Client struct {
+	Username  string
+	Password  string
 	Url       string
 	CookieJar *cookiejar.Jar
 }
@@ -21,7 +23,15 @@ func NewClient(url string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Client{url, jar}, nil
+	return &Client{"", "", url, jar}, nil
+}
+
+func NewAuthClient(username, password, url string) (*Client, error) {
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
+	}
+	return &Client{username, password, url, jar}, nil
 }
 
 // Get server information.
@@ -199,6 +209,10 @@ func (c *Client) request(method, url string, data io.Reader, contentType string)
 	}
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
+	}
+	// basic auth
+	if c.Username != "" && c.Password != "" {
+		req.SetBasicAuth(c.Username, c.Password)
 	}
 	// add cookies
 	client := &http.Client{Jar: c.CookieJar}
