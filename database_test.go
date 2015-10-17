@@ -1,8 +1,6 @@
 package couchdb
 
-import (
-	"testing"
-)
+import "testing"
 
 type DummyDocument struct {
 	Document
@@ -15,10 +13,9 @@ var c, _ = NewClient("http://127.0.0.1:5984/")
 var db = c.Use("dummy")
 
 func TestBefore(t *testing.T) {
-	t.Log("creating dummy database")
 	_, err := client.Create("dummy")
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
 }
 

@@ -10,7 +10,7 @@ import (
 	"net/http/cookiejar"
 )
 
-// Create a new client.
+// Client holds all info for database client
 type Client struct {
 	Username  string
 	Password  string
@@ -18,6 +18,7 @@ type Client struct {
 	CookieJar *cookiejar.Jar
 }
 
+// NewClient returns new couchdb client for given url
 func NewClient(url string) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -26,6 +27,7 @@ func NewClient(url string) (*Client, error) {
 	return &Client{"", "", url, jar}, nil
 }
 
+// NewAuthClient returns new couchdb client with basic authentication
 func NewAuthClient(username, password, url string) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
@@ -34,7 +36,7 @@ func NewAuthClient(username, password, url string) (*Client, error) {
 	return &Client{username, password, url, jar}, nil
 }
 
-// Get server information.
+// Info returns some information about the server
 func (c *Client) Info() (*Server, error) {
 	body, err := c.request("GET", c.Url, nil, "application/json")
 	if err != nil {
@@ -45,6 +47,7 @@ func (c *Client) Info() (*Server, error) {
 	return server, json.NewDecoder(body).Decode(&server)
 }
 
+// Log returns logs from database
 func (c *Client) Log() (string, error) {
 	url := fmt.Sprintf("%s_log", c.Url)
 	body, err := c.request("GET", url, nil, "")
@@ -59,7 +62,7 @@ func (c *Client) Log() (string, error) {
 	return (string(log)), nil
 }
 
-// List of running tasks.
+// ActiveTasks returns list of currently running tasks
 func (c *Client) ActiveTasks() ([]Task, error) {
 	url := fmt.Sprintf("%s_active_tasks", c.Url)
 	body, err := c.request("GET", url, nil, "application/json")
@@ -71,7 +74,7 @@ func (c *Client) ActiveTasks() ([]Task, error) {
 	return tasks, json.NewDecoder(body).Decode(&tasks)
 }
 
-// Get all databases.
+// All returns list of all databases on server
 func (c *Client) All() ([]string, error) {
 	url := fmt.Sprintf("%s_all_dbs", c.Url)
 	body, err := c.request("GET", url, nil, "application/json")
@@ -117,7 +120,7 @@ func (c *Client) Delete(name string) (*DatabaseResponse, error) {
 	return newDatabaseResponse(body)
 }
 
-// Create user.
+// CreateUser creates a new user in _users database
 func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
 	url := fmt.Sprintf("%s_users/%s", c.Url, user.Id)
 	res, err := json.Marshal(user)
@@ -133,7 +136,7 @@ func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
 	return newDocumentResponse(body)
 }
 
-// Get user.
+// GetUser returns user by given name
 func (c *Client) GetUser(name string) (*User, error) {
 	url := fmt.Sprintf("%s_users/org.couchdb.user:%s", c.Url, name)
 	body, err := c.request("GET", url, nil, "application/json")
@@ -145,13 +148,13 @@ func (c *Client) GetUser(name string) (*User, error) {
 	return user, json.NewDecoder(body).Decode(&user)
 }
 
-// Delete user.
+// DeleteUser removes user from database
 func (c *Client) DeleteUser(user *User) (*DocumentResponse, error) {
 	db := c.Use("_users")
 	return db.Delete(user)
 }
 
-// Create session.
+// CreateSession creates a new session and logs in user
 func (c *Client) CreateSession(name, password string) (*PostSessionResponse, error) {
 	url := fmt.Sprintf("%s_session", c.Url)
 	creds := Credentials{name, password}
@@ -169,7 +172,7 @@ func (c *Client) CreateSession(name, password string) (*PostSessionResponse, err
 	return sessionResponse, json.NewDecoder(body).Decode(&sessionResponse)
 }
 
-// Get session.
+// GetSession returns session for currently logged in user
 func (c *Client) GetSession() (*GetSessionResponse, error) {
 	url := fmt.Sprintf("%s_session", c.Url)
 	body, err := c.request("GET", url, nil, "")
@@ -181,7 +184,7 @@ func (c *Client) GetSession() (*GetSessionResponse, error) {
 	return sessionResponse, json.NewDecoder(body).Decode(&sessionResponse)
 }
 
-// Delete session
+// DeleteSession removes current session and logs out user
 func (c *Client) DeleteSession() (*DatabaseResponse, error) {
 	url := fmt.Sprintf("%s_session", c.Url)
 	body, err := c.request("DELETE", url, nil, "")
