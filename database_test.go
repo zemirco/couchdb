@@ -1,9 +1,6 @@
 package couchdb
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 type DummyDocument struct {
 	Document
@@ -15,17 +12,11 @@ type DummyDocument struct {
 var c, _ = NewClient("http://127.0.0.1:5984/")
 var db = c.Use("dummy")
 
-func TestMain(m *testing.M) {
+func TestBefore(t *testing.T) {
 	_, err := client.Create("dummy")
 	if err != nil {
 		panic(err)
 	}
-	code := m.Run()
-	_, err = client.Delete("dummy")
-	if err != nil {
-		panic(err)
-	}
-	os.Exit(code)
 }
 
 func TestDocumentPost(t *testing.T) {
@@ -141,5 +132,13 @@ func TestDocumentBulkDocs(t *testing.T) {
 	}
 	if res[0].Ok != true || res[1].Ok != true {
 		t.Error("bulk docs error")
+	}
+}
+
+func TestAfter(t *testing.T) {
+	t.Log("deleting dummy database")
+	_, err := client.Delete("dummy")
+	if err != nil {
+		t.Fatal(err)
 	}
 }

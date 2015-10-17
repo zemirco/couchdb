@@ -1,9 +1,6 @@
 package couchdb
 
-import (
-	"os"
-	"testing"
-)
+import "testing"
 
 type DataDocument struct {
 	Document
@@ -16,7 +13,7 @@ type DataDocument struct {
 var cView, _ = NewClient("http://127.0.0.1:5984/")
 var dbView = cView.Use("gotest")
 
-func setup() {
+func TestViewBefore(t *testing.T) {
 
 	// create database
 	t.Log("creating database...")
@@ -67,7 +64,7 @@ func setup() {
 		Views: views,
 	}
 
-	_, err = db_view.Post(design)
+	_, err = dbView.Post(design)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -81,7 +78,7 @@ func setup() {
 		Age:  10,
 	}
 
-	_, err = db_view.Post(doc1)
+	_, err = dbView.Post(doc1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,21 +90,14 @@ func setup() {
 		Age:  20,
 	}
 
-	_, err = db_view.Post(doc2)
+	_, err = dbView.Post(doc2)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	teardown()
-	os.Exit(code)
-}
-
 func TestViewGet(t *testing.T) {
-	view := db_view.View("test")
+	view := dbView.View("test")
 	params := QueryParameters{}
 	res, err := view.Get("foo", params)
 	if err != nil {
@@ -120,7 +110,7 @@ func TestViewGet(t *testing.T) {
 
 func TestDesignDocumentName(t *testing.T) {
 	doc := new(DesignDocument)
-	err := db_view.Get(doc, "_design/test")
+	err := dbView.Get(doc, "_design/test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -131,7 +121,7 @@ func TestDesignDocumentName(t *testing.T) {
 
 func TestDesignDocumentView(t *testing.T) {
 	doc := new(DesignDocument)
-	err := db_view.Get(doc, "_design/test")
+	err := dbView.Get(doc, "_design/test")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +132,7 @@ func TestDesignDocumentView(t *testing.T) {
 }
 
 func TestViewGetWithQueryParameters(t *testing.T) {
-	view := db_view.View("test")
+	view := dbView.View("test")
 	params := QueryParameters{
 		Key: `"foo1"`,
 	}
@@ -156,7 +146,7 @@ func TestViewGetWithQueryParameters(t *testing.T) {
 }
 
 func TestViewGetWithStartKeyEndKey(t *testing.T) {
-	view := db_view.View("test")
+	view := dbView.View("test")
 
 	params := QueryParameters{
 		StartKey: `["foo2","beep2"]`,
@@ -172,7 +162,7 @@ func TestViewGetWithStartKeyEndKey(t *testing.T) {
 }
 
 func TestViewGetWithInteger(t *testing.T) {
-	view := db_view.View("test")
+	view := dbView.View("test")
 
 	params := QueryParameters{
 		StartKey: `["foo2",20]`,
@@ -187,7 +177,7 @@ func TestViewGetWithInteger(t *testing.T) {
 	}
 }
 
-func teardown() {
+func TestViewAfter(t *testing.T) {
 	_, err := cView.Delete("gotest")
 	if err != nil {
 		t.Fatal(err)
