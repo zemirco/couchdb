@@ -4,16 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-querystring/query"
 	"io"
+
+	"github.com/google/go-querystring/query"
 )
 
+// View performs actions and certain view documents
 type View struct {
 	Url string
 	*Database
 }
 
-// Execute specified view function from specified design document.
+// Get executes specified view function from specified design document.
 func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 	q, err := query.Values(params)
 	if err != nil {
@@ -28,7 +30,7 @@ func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 	return newViewResponse(body)
 }
 
-// Execute specified view function from specified design document.
+// Post executes specified view function from specified design document.
 // Unlike View.Get for accessing views, View.Post supports
 // the specification of explicit keys to be retrieved from the view results.
 func (v *View) Post(name string, keys []string, params QueryParameters) (*ViewResponse, error) {

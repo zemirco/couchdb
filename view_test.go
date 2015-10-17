@@ -1,6 +1,7 @@
 package couchdb
 
 import (
+	"os"
 	"testing"
 )
 
@@ -12,14 +13,14 @@ type DataDocument struct {
 	Age  int    `json:"age"`
 }
 
-var c_view, _ = NewClient("http://127.0.0.1:5984/")
-var db_view = c_view.Use("gotest")
+var cView, _ = NewClient("http://127.0.0.1:5984/")
+var dbView = cView.Use("gotest")
 
-func TestViewBefore(t *testing.T) {
+func setup() {
 
 	// create database
 	t.Log("creating database...")
-	_, err := c_view.Create("gotest")
+	_, err := cView.Create("gotest")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,6 +97,13 @@ func TestViewBefore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	teardown()
+	os.Exit(code)
 }
 
 func TestViewGet(t *testing.T) {
@@ -179,9 +187,8 @@ func TestViewGetWithInteger(t *testing.T) {
 	}
 }
 
-func TestViewAfter(t *testing.T) {
-	t.Log("deleting test data for view tests...")
-	_, err := c_view.Delete("gotest")
+func teardown() {
+	_, err := cView.Delete("gotest")
 	if err != nil {
 		t.Fatal(err)
 	}
