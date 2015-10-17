@@ -10,6 +10,7 @@ import (
 	"reflect"
 )
 
+// Database performs actions on certain database
 type Database struct {
 	*Client
 	Url string
@@ -75,7 +76,7 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	return newDocumentResponse(body)
 }
 
-// Put attachment.
+// PutAttachment adds attachment to document
 func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse, error) {
 
 	// target url
@@ -121,7 +122,7 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 	return newDocumentResponse(body)
 }
 
-// The bulk document API allows you to create and update multiple documents
+// Bulk allows to create and update multiple documents
 // at the same time within a single request. The basic operation is similar to
 // creating or updating a single document, except that you batch
 // the document structure and information.
@@ -152,7 +153,7 @@ func (db *Database) Bulk(docs interface{}) ([]DocumentResponse, error) {
 
 }
 
-// Use view document.
+// View returns view for given name.
 func (db *Database) View(name string) View {
 	url := fmt.Sprintf("%s_design/%s/", db.Url, name)
 	return View{
