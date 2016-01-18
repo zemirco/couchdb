@@ -2,6 +2,7 @@
 # couchdb
 
 [![Build Status](https://travis-ci.org/zemirco/couchdb.svg)](https://travis-ci.org/zemirco/couchdb)
+[![Coverage Status](https://coveralls.io/repos/github/zemirco/couchdb/badge.svg?branch=master)](https://coveralls.io/github/zemirco/couchdb?branch=master)
 [![GoDoc](https://godoc.org/github.com/zemirco/couchdb?status.svg)](https://godoc.org/github.com/zemirco/couchdb)
 
 CouchDB client for Go.
