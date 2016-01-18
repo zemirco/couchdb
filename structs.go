@@ -111,24 +111,24 @@ type Task struct {
 }
 
 type QueryParameters struct {
-	Conflicts       bool   `url:"conflicts,omitempty"`
-	Descending      bool   `url:"descending,omitempty"`
-	EndKey          string `url:"endkey,comma,omitempty"`
-	EndKeyDocId     string `url:"end_key_doc_id,omitempty"`
-	Group           bool   `url:"group,omitempty"`
-	GroupLevel      int    `url:"group_level,omitempty"`
-	IncludeDocs     bool   `url:"include_docs,omitempty"`
-	Attachments     bool   `url:"attachments,omitempty"`
-	AttEncodingInfo bool   `url:"att_encoding_info,omitempty"`
-	InclusiveEnd    bool   `url:"inclusive_end,omitempty"`
-	Key             string `url:"key,omitempty"`
-	Limit           int    `url:"limit,omitempty"`
-	Reduce          bool   `url:"reduce,omitempty"`
-	Skip            int    `url:"skip,omitempty"`
-	Stale           string `url:"stale,omitempty"`
-	StartKey        string `url:"startkey,comma,omitempty"`
-	StartKeyDocId   string `url:"startkey_docid,omitempty"`
-	UpdateSeq       bool   `url:"update_seq,omitempty"`
+	Conflicts       bool   `url:"conflicts"`
+	Descending      bool   `url:"descending"`
+	EndKey          string `url:"endkey"`
+	EndKeyDocId     string `url:"end_key_doc_id"`
+	Group           bool   `url:"group"`
+	GroupLevel      int    `url:"group_level"`
+	IncludeDocs     bool   `url:"include_docs"`
+	Attachments     bool   `url:"attachments"`
+	AttEncodingInfo bool   `url:"att_encoding_info"`
+	InclusiveEnd    bool   `url:"inclusive_end"`
+	Key             string `url:"key"`
+	Limit           int    `url:"limit"`
+	Reduce          bool   `url:"reduce"`
+	Skip            int    `url:"skip"`
+	Stale           string `url:"stale"`
+	StartKey        string `url:"startkey"`
+	StartKeyDocId   string `url:"startkey_docid"`
+	UpdateSeq       bool   `url:"update_seq"`
 }
 
 type ViewResponse struct {
