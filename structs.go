@@ -113,22 +113,46 @@ type Task struct {
 type QueryParameters struct {
 	Conflicts       bool   `url:"conflicts"`
 	Descending      bool   `url:"descending"`
-	EndKey          string `url:"endkey,comma"`
-	EndKeyDocId     string `url:"end_key_doc_id"`
+	EndKey          string `url:"endkey,comma,omitempty"`
+	EndKeyDocId     string `url:"end_key_doc_id,omitempty"`
 	Group           bool   `url:"group"`
-	GroupLevel      int    `url:"group_level"`
+	GroupLevel      int    `url:"group_level,omitempty"`
 	IncludeDocs     bool   `url:"include_docs"`
 	Attachments     bool   `url:"attachments"`
 	AttEncodingInfo bool   `url:"att_encoding_info"`
 	InclusiveEnd    bool   `url:"inclusive_end"`
-	Key             string `url:"key"`
-	Limit           int    `url:"limit"`
+	Key             string `url:"key,omitempty"`
+	Limit           int    `url:"limit,omitempty"`
 	Reduce          bool   `url:"reduce"`
-	Skip            int    `url:"skip"`
-	Stale           string `url:"stale"`
-	StartKey        string `url:"startkey,comma"`
-	StartKeyDocId   string `url:"startkey_docid"`
+	Skip            int    `url:"skip,omitempty"`
+	Stale           string `url:"stale,omitempty"`
+	StartKey        string `url:"startkey,comma,omitempty"`
+	StartKeyDocId   string `url:"startkey_docid,omitempty"`
 	UpdateSeq       bool   `url:"update_seq"`
+}
+
+// NewQueryParameters returns query parameters with default values
+// http://docs.couchdb.org/en/1.6.1/api/ddoc/views.html#get--db-_design-ddoc-_view-view
+// The problem is "reduce" for example. The default value is true.
+// If we have a map/reduce function that has a reduce part everything works as expected.
+// We'll get into trouble if we want to reuse this document without reduce.
+// If we use the omitempty flag on the Reduce field it would get it's zero value false
+// which would not be sent to the server.
+func NewQueryParameters() QueryParameters {
+	// reduce is the exception. the default would be true
+	// but as have have more cases where we don't have a reduce function we set it false
+	// set it to true if you really need it.
+	return QueryParameters{
+		Conflicts:       false,
+		Descending:      false,
+		Group:           false,
+		IncludeDocs:     false,
+		Attachments:     false,
+		AttEncodingInfo: false,
+		InclusiveEnd:    true,
+		Reduce:          false,
+		UpdateSeq:       false,
+	}
 }
 
 type ViewResponse struct {

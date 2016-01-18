@@ -1,6 +1,9 @@
 package couchdb
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 type DataDocument struct {
 	Document
@@ -98,7 +101,7 @@ func TestViewBefore(t *testing.T) {
 
 func TestViewGet(t *testing.T) {
 	view := dbView.View("test")
-	params := QueryParameters{}
+	params := NewQueryParameters()
 	res, err := view.Get("foo", params)
 	if err != nil {
 		t.Fatal(err)
@@ -133,9 +136,8 @@ func TestDesignDocumentView(t *testing.T) {
 
 func TestViewGetWithQueryParameters(t *testing.T) {
 	view := dbView.View("test")
-	params := QueryParameters{
-		Key: `"foo1"`,
-	}
+	params := NewQueryParameters()
+	params.Key = fmt.Sprintf("%q", "foo1")
 	res, err := view.Get("foo", params)
 	if err != nil {
 		t.Fatal(err)
@@ -147,11 +149,9 @@ func TestViewGetWithQueryParameters(t *testing.T) {
 
 func TestViewGetWithStartKeyEndKey(t *testing.T) {
 	view := dbView.View("test")
-
-	params := QueryParameters{
-		StartKey: `["foo2","beep2"]`,
-		EndKey:   `["foo2","beep2"]`,
-	}
+	params := NewQueryParameters()
+	params.StartKey = fmt.Sprintf("[%q,%q]", "foo2", "beep2")
+	params.EndKey = fmt.Sprintf("[%q,%q]", "foo2", "beep2")
 	res, err := view.Get("complex", params)
 	if err != nil {
 		t.Fatal(err)
@@ -163,11 +163,9 @@ func TestViewGetWithStartKeyEndKey(t *testing.T) {
 
 func TestViewGetWithInteger(t *testing.T) {
 	view := dbView.View("test")
-
-	params := QueryParameters{
-		StartKey: `["foo2",20]`,
-		EndKey:   `["foo2",20]`,
-	}
+	params := NewQueryParameters()
+	params.StartKey = fmt.Sprintf("[%q,%d]", "foo2", 20)
+	params.EndKey = fmt.Sprintf("[%q,%d]", "foo2", 20)
 	res, err := view.Get("int", params)
 	if err != nil {
 		t.Fatal(err)
