@@ -113,7 +113,7 @@ type Task struct {
 type QueryParameters struct {
 	Conflicts       bool   `url:"conflicts"`
 	Descending      bool   `url:"descending"`
-	EndKey          string `url:"endkey"`
+	EndKey          string `url:"endkey,comma"`
 	EndKeyDocId     string `url:"end_key_doc_id"`
 	Group           bool   `url:"group"`
 	GroupLevel      int    `url:"group_level"`
@@ -126,7 +126,7 @@ type QueryParameters struct {
 	Reduce          bool   `url:"reduce"`
 	Skip            int    `url:"skip"`
 	Stale           string `url:"stale"`
-	StartKey        string `url:"startkey"`
+	StartKey        string `url:"startkey,comma"`
 	StartKeyDocId   string `url:"startkey_docid"`
 	UpdateSeq       bool   `url:"update_seq"`
 }
