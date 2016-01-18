@@ -124,7 +124,7 @@ type QueryParameters struct {
 	Key             string `url:"key,omitempty"`
 	Limit           int    `url:"limit,omitempty"`
 	Reduce          bool   `url:"reduce"`
-	Skip            int    `url:"skip,omitempty"`
+	Skip            int    `url:"skip"`
 	Stale           string `url:"stale,omitempty"`
 	StartKey        string `url:"startkey,comma,omitempty"`
 	StartKeyDocId   string `url:"startkey_docid,omitempty"`
@@ -151,6 +151,7 @@ func NewQueryParameters() QueryParameters {
 		AttEncodingInfo: false,
 		InclusiveEnd:    true,
 		Reduce:          false,
+		Skip:            0,
 		UpdateSeq:       false,
 	}
 }
