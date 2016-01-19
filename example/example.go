@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/zemirco/couchdb"
 )
 
@@ -45,7 +46,7 @@ func main() {
 	check(err)
 
 	// get id and current revision.
-	err = db.Get(doc, result.Id)
+	err = db.Get(doc, result.ID)
 	check(err)
 
 	// delete document
