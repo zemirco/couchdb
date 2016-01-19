@@ -22,7 +22,7 @@ func TestBefore(t *testing.T) {
 func TestDocumentPost(t *testing.T) {
 	doc := &DummyDocument{
 		Document: Document{
-			Id: "testid",
+			ID: "testid",
 		},
 		Foo:  "bar",
 		Beep: "bopp",
@@ -73,7 +73,7 @@ func TestDocumentPut(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Id != "testid" || res.Ok == false {
+	if res.ID != "testid" || res.Ok == false {
 		t.Error("put document response error")
 	}
 }
@@ -90,7 +90,7 @@ func TestDocumentDelete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Id != "testid" || res.Ok == false {
+	if res.ID != "testid" || res.Ok == false {
 		t.Error("delete document response error")
 	}
 }
@@ -98,7 +98,7 @@ func TestDocumentDelete(t *testing.T) {
 func TestDocumentPutAttachment(t *testing.T) {
 	doc := &DummyDocument{
 		Document: Document{
-			Id: "testid",
+			ID: "testid",
 		},
 		Foo:  "bar",
 		Beep: "bopp",
@@ -107,7 +107,7 @@ func TestDocumentPutAttachment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Id != "testid" || res.Ok == false {
+	if res.ID != "testid" || res.Ok == false {
 		t.Error("put attachment error")
 	}
 }

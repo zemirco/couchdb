@@ -31,19 +31,19 @@ func newError(res *http.Response) error {
 		return err
 	}
 	error.Method = res.Request.Method
-	error.Url = res.Request.URL.String()
+	error.URL = res.Request.URL.String()
 	error.StatusCode = res.StatusCode
 	return error
 }
 
 // Create new CouchDB response for any document method.
-func newDocumentResponse(body io.ReadCloser) (*DocumentResponse, error) {
+func newDocumentResponse(body io.Reader) (*DocumentResponse, error) {
 	response := &DocumentResponse{}
 	return response, json.NewDecoder(body).Decode(&response)
 }
 
 // Create new CouchDB response for any database method.
-func newDatabaseResponse(body io.ReadCloser) (*DatabaseResponse, error) {
+func newDatabaseResponse(body io.Reader) (*DatabaseResponse, error) {
 	response := &DatabaseResponse{}
 	return response, json.NewDecoder(body).Decode(&response)
 }
@@ -88,7 +88,7 @@ func writeJSON(document *Document, writer *multipart.Writer, file *os.File) erro
 }
 
 // Write actual file content to multipart/related.
-func writeMultipart(writer *multipart.Writer, file *os.File) error {
+func writeMultipart(writer *multipart.Writer, file io.Reader) error {
 	part, err := writer.CreatePart(textproto.MIMEHeader{})
 	if err != nil {
 		return err
@@ -101,4 +101,42 @@ func writeMultipart(writer *multipart.Writer, file *os.File) error {
 	}
 
 	return nil
+}
+
+// Bool is a helper routine that allocates a new bool value
+// to store v and returns a pointer to it.
+// https://github.com/golang/protobuf/blob/master/proto/lib.go#L352
+func Bool(v bool) *bool {
+	return &v
+}
+
+// Int32 is a helper routine that allocates a new int32 value
+// to store v and returns a pointer to it.
+// https://github.com/golang/protobuf/blob/master/proto/lib.go#L356
+func Int32(v int32) *int32 {
+	return &v
+}
+
+// Int is a helper routine that allocates a new int32 value
+// to store v and returns a pointer to it, but unlike Int32
+// its argument value is an int.
+// https://github.com/golang/protobuf/blob/master/proto/lib.go#L365
+func Int(v int) *int32 {
+	p := new(int32)
+	*p = int32(v)
+	return p
+}
+
+// Int64 is a helper routine that allocates a new int64 value
+// to store v and returns a pointer to it.
+// https://github.com/golang/protobuf/blob/master/proto/lib.go#L373
+func Int64(v int64) *int64 {
+	return &v
+}
+
+// String is a helper routine that allocates a new string value
+// to store v and returns a pointer to it.
+// https://github.com/golang/protobuf/blob/master/proto/lib.go#L403
+func String(v string) *string {
+	return &v
 }

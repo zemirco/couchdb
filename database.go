@@ -13,17 +13,17 @@ import (
 // Database performs actions on certain database
 type Database struct {
 	*Client
-	Url string
+	URL string
 }
 
 // Head request.
 func (db *Database) Head(id string) (*http.Response, error) {
-	return http.Head(db.Url + id)
+	return http.Head(db.URL + id)
 }
 
 // Get document.
 func (db *Database) Get(doc CouchDoc, id string) error {
-	url := fmt.Sprintf("%s%s", db.Url, id)
+	url := fmt.Sprintf("%s%s", db.URL, id)
 	body, err := db.Client.request("GET", url, nil, "application/json")
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func (db *Database) Get(doc CouchDoc, id string) error {
 // Put document.
 func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
 	document := doc.GetDocument()
-	url := fmt.Sprintf("%s%s", db.Url, document.Id)
+	url := fmt.Sprintf("%s%s", db.URL, document.ID)
 	res, err := json.Marshal(doc)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 		return nil, err
 	}
 	data := bytes.NewReader(res)
-	body, err := db.Client.request("POST", db.Url, data, "application/json")
+	body, err := db.Client.request("POST", db.URL, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 // Delete document.
 func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	document := doc.GetDocument()
-	url := fmt.Sprintf("%s%s?rev=%s", db.Url, document.Id, document.Rev)
+	url := fmt.Sprintf("%s%s?rev=%s", db.URL, document.ID, document.Rev)
 	body, err := db.Client.request("DELETE", url, nil, "application/json")
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 
 	// target url
 	document := doc.GetDocument()
-	url := fmt.Sprintf("%s%s", db.Url, document.Id)
+	url := fmt.Sprintf("%s%s", db.URL, document.ID)
 
 	// get file from disk
 	file, err := os.Open(path)
@@ -141,7 +141,7 @@ func (db *Database) Bulk(docs interface{}) ([]DocumentResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("%s_bulk_docs", db.Url)
+	url := fmt.Sprintf("%s_bulk_docs", db.URL)
 	data := bytes.NewReader(res)
 	body, err := db.Client.request("POST", url, data, "application/json")
 	if err != nil {
@@ -155,9 +155,9 @@ func (db *Database) Bulk(docs interface{}) ([]DocumentResponse, error) {
 
 // View returns view for given name.
 func (db *Database) View(name string) View {
-	url := fmt.Sprintf("%s_design/%s/", db.Url, name)
+	url := fmt.Sprintf("%s_design/%s/", db.URL, name)
 	return View{
-		Url:      url,
+		URL:      url,
 		Database: db,
 	}
 }

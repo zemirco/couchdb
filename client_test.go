@@ -92,7 +92,7 @@ func TestCreateUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Ok == false || res.Id != "org.couchdb.user:john" {
+	if res.Ok == false || res.ID != "org.couchdb.user:john" {
 		t.Error("create user error")
 	}
 }
@@ -146,7 +146,7 @@ func TestDeleteUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Ok == false || res.Id != "org.couchdb.user:john" {
+	if res.Ok == false || res.ID != "org.couchdb.user:john" {
 		t.Error("delete user error")
 	}
 }
@@ -189,7 +189,7 @@ func TestDeleteFail(t *testing.T) {
 
 func TestUse(t *testing.T) {
 	db := client.Use("_users")
-	if db.Url != "http://127.0.0.1:5984/_users/" {
+	if db.URL != "http://127.0.0.1:5984/_users/" {
 		t.Error("use error")
 	}
 }

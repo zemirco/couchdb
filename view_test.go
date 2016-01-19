@@ -13,95 +13,140 @@ type DataDocument struct {
 	Age  int    `json:"age"`
 }
 
+type Person struct {
+	Document
+	Type   string  `json:"type"`
+	Name   string  `json:"name"`
+	Age    float64 `json:"age"`
+	Gender string  `json:"gender"`
+}
+
 var cView, _ = NewClient("http://127.0.0.1:5984/")
 var dbView = cView.Use("gotest")
 
 func TestViewBefore(t *testing.T) {
-
 	// create database
-	t.Log("creating database...")
-	_, err := cView.Create("gotest")
-	if err != nil {
+	if _, err := cView.Create("gotest"); err != nil {
 		t.Fatal(err)
 	}
-
-	// create design document
-	t.Log("creating design document...")
-	view := DesignDocumentView{}
-	view.Map =
-		`
-		function(doc){
-			if (doc.type == 'data') emit(doc.foo)
-		}
-	`
-	// create a bit more comple design document
-	t.Log("creating complex design document...")
-	complexView := DesignDocumentView{}
-	complexView.Map =
-		`
-		function(doc) {
-			if (doc.type === 'data') emit([doc.foo, doc.beep])
-		}
-		`
-
-	// create design document with int key
-	t.Log("creating int design document...")
-	intView := DesignDocumentView{}
-	intView.Map =
-		`
-		function(doc) {
-			if (doc.type === 'data') emit([doc.foo, doc.age])
-		}
-		`
-
-	views := make(map[string]DesignDocumentView)
-	views["foo"] = view
-	views["complex"] = complexView
-	views["int"] = intView
-
-	// views := make(map[string]interface{})
 	design := &DesignDocument{
 		Document: Document{
-			Id: "_design/test",
+			ID: "_design/test",
 		},
-		Views: views,
+		Language: "javascript",
+		Views: map[string]DesignDocumentView{
+			"foo": DesignDocumentView{
+				Map: `
+					function(doc) {
+						if (doc.type === 'data') {
+							emit(doc.foo);
+						}
+					}
+				`,
+			},
+			"int": DesignDocumentView{
+				Map: `
+					function(doc) {
+						if (doc.type === 'data') {
+							emit([doc.foo, doc.age]);
+						}
+					}
+				`,
+			},
+			"complex": DesignDocumentView{
+				Map: `
+					function(doc) {
+						if (doc.type === 'data') {
+							emit([doc.foo, doc.beep]);
+						}
+					}
+				`,
+			},
+		},
 	}
-
-	_, err = dbView.Post(design)
-	if err != nil {
+	if _, err := dbView.Post(design); err != nil {
 		t.Fatal(err)
 	}
-
+	// create design document for person
+	designPerson := DesignDocument{
+		Document: Document{
+			ID: "_design/person",
+		},
+		Language: "javascript",
+		Views: map[string]DesignDocumentView{
+			"ageByGender": DesignDocumentView{
+				Map: `
+					function(doc) {
+						if (doc.type === 'person') {
+							emit(doc.gender, doc.age);
+						}
+					}
+				`,
+				Reduce: `
+					function(keys, values, rereduce) {
+						return sum(values);
+					}
+				`,
+			},
+		},
+	}
+	if _, err := dbView.Post(&designPerson); err != nil {
+		t.Fatal(err)
+	}
 	// create dummy data
-	t.Log("creating dummy data...")
 	doc1 := &DataDocument{
 		Type: "data",
 		Foo:  "foo1",
 		Beep: "beep1",
 		Age:  10,
 	}
-
-	_, err = dbView.Post(doc1)
-	if err != nil {
+	if _, err := dbView.Post(doc1); err != nil {
 		t.Fatal(err)
 	}
-
 	doc2 := &DataDocument{
 		Type: "data",
 		Foo:  "foo2",
 		Beep: "beep2",
 		Age:  20,
 	}
-
-	_, err = dbView.Post(doc2)
-	if err != nil {
+	if _, err := dbView.Post(doc2); err != nil {
+		t.Fatal(err)
+	}
+	// create multiple persons
+	data := []struct {
+		Name   string
+		Age    float64
+		Gender string
+	}{
+		{"John", 45, "male"},
+		{"Frank", 40, "male"},
+		{"Steve", 60, "male"},
+		{"Max", 26, "male"},
+		{"Marc", 36, "male"},
+		{"Nick", 18, "male"},
+		{"Jessica", 49, "female"},
+		{"Lily", 20, "female"},
+		{"Sophia", 66, "female"},
+		{"Chloe", 12, "female"},
+	}
+	people := make([]Person, len(data))
+	for index, d := range data {
+		people[index] = Person{
+			Type:   "person",
+			Name:   d.Name,
+			Age:    d.Age,
+			Gender: d.Gender,
+		}
+	}
+	// bulk save people to database
+	if _, err := dbView.Bulk(people); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestViewGet(t *testing.T) {
 	view := dbView.View("test")
-	params := NewQueryParameters()
+	params := QueryParameters{}
 	res, err := view.Get("foo", params)
 	if err != nil {
 		t.Fatal(err)
@@ -136,8 +181,9 @@ func TestDesignDocumentView(t *testing.T) {
 
 func TestViewGetWithQueryParameters(t *testing.T) {
 	view := dbView.View("test")
-	params := NewQueryParameters()
-	params.Key = fmt.Sprintf("%q", "foo1")
+	params := QueryParameters{
+		Key: String(fmt.Sprintf("%q", "foo1")),
+	}
 	res, err := view.Get("foo", params)
 	if err != nil {
 		t.Fatal(err)
@@ -149,9 +195,10 @@ func TestViewGetWithQueryParameters(t *testing.T) {
 
 func TestViewGetWithStartKeyEndKey(t *testing.T) {
 	view := dbView.View("test")
-	params := NewQueryParameters()
-	params.StartKey = fmt.Sprintf("[%q,%q]", "foo2", "beep2")
-	params.EndKey = fmt.Sprintf("[%q,%q]", "foo2", "beep2")
+	params := QueryParameters{
+		StartKey: String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
+		EndKey:   String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
+	}
 	res, err := view.Get("complex", params)
 	if err != nil {
 		t.Fatal(err)
@@ -163,9 +210,10 @@ func TestViewGetWithStartKeyEndKey(t *testing.T) {
 
 func TestViewGetWithInteger(t *testing.T) {
 	view := dbView.View("test")
-	params := NewQueryParameters()
-	params.StartKey = fmt.Sprintf("[%q,%d]", "foo2", 20)
-	params.EndKey = fmt.Sprintf("[%q,%d]", "foo2", 20)
+	params := QueryParameters{
+		StartKey: String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
+		EndKey:   String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
+	}
 	res, err := view.Get("int", params)
 	if err != nil {
 		t.Fatal(err)
@@ -175,9 +223,66 @@ func TestViewGetWithInteger(t *testing.T) {
 	}
 }
 
-func TestViewAfter(t *testing.T) {
-	_, err := cView.Delete("gotest")
+func TestViewGetWithReduce(t *testing.T) {
+	view := dbView.View("person")
+	params := QueryParameters{}
+	res, err := view.Get("ageByGender", params)
 	if err != nil {
+		t.Fatal(err)
+	}
+	ageTotalSum := res.Rows[0].Value.(float64)
+	if ageTotalSum != 372 {
+		t.Fatalf("expected age 372 but got %v", ageTotalSum)
+	}
+}
+
+func TestViewGetWithReduceAndGroup(t *testing.T) {
+	view := dbView.View("person")
+	params := QueryParameters{
+		Key:        String(fmt.Sprintf("%q", "female")),
+		GroupLevel: Int(1),
+	}
+	res, err := view.Get("ageByGender", params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ageTotalFemale := res.Rows[0].Value.(float64)
+	if ageTotalFemale != 147 {
+		t.Fatalf("expected age 147 but got %v", ageTotalFemale)
+	}
+}
+
+func TestViewGetWithoutReduce(t *testing.T) {
+	view := dbView.View("person")
+	params := QueryParameters{
+		Key:    String(fmt.Sprintf("%q", "male")),
+		Reduce: Bool(false),
+	}
+	res, err := view.Get("ageByGender", params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Rows) != 6 {
+		t.Fatalf("expected 6 rows but got %d instead", len(res.Rows))
+	}
+}
+
+func TestViewPost(t *testing.T) {
+	view := dbView.View("person")
+	params := QueryParameters{
+		Reduce: Bool(false),
+	}
+	res, err := view.Post("ageByGender", []string{"male"}, params)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Rows) != 6 {
+		t.Fatalf("expected 6 rows but got %d instead", len(res.Rows))
+	}
+}
+
+func TestViewAfter(t *testing.T) {
+	if _, err := cView.Delete("gotest"); err != nil {
 		t.Fatal(err)
 	}
 }
