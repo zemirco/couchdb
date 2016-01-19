@@ -14,21 +14,19 @@ package main
 
 import "github.com/zemirco/couchdb"
 
-func check(err error) {
-  if err != nil {
-    panic(err)
-  }
-}
-
 func main() {
 
   // create a new client
   client, err := couchdb.NewClient("http://127.0.0.1:5984/")
-  check(err)
+  if err != nil {
+    panic(err)
+  }
 
   // get some information about your CouchDB
   info, err := client.Info()
-  check(err)
+  if err != nil {
+    panic(err)
+  }
   fmt.Println(info)
 
 }
