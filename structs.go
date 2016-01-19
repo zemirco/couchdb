@@ -137,9 +137,9 @@ type QueryParameters struct {
 	InclusiveEnd    *bool   `url:"inclusive_end,omitempty"`
 	Reduce          *bool   `url:"reduce,omitempty"`
 	UpdateSeq       *bool   `url:"update_seq,omitempty"`
-	GroupLevel      *int32  `url:"group_level,omitempty"`
-	Limit           *int32  `url:"limit,omitempty"`
-	Skip            *int32  `url:"skip,omitempty"`
+	GroupLevel      *int    `url:"group_level,omitempty"`
+	Limit           *int    `url:"limit,omitempty"`
+	Skip            *int    `url:"skip,omitempty"`
 	Key             *string `url:"key,omitempty"`
 	EndKey          *string `url:"endkey,comma,omitempty"`
 	EndKeyDocID     *string `url:"end_key_doc_id,omitempty"`
@@ -147,31 +147,6 @@ type QueryParameters struct {
 	StartKey        *string `url:"startkey,comma,omitempty"`
 	StartKeyDocID   *string `url:"startkey_docid,omitempty"`
 }
-
-// NewQueryParameters returns query parameters with default values
-// http://docs.couchdb.org/en/latest/api/ddoc/views.html#get--db-_design-ddoc-_view-view
-// The problem is "reduce" for example. The default value is true.
-// If we have a map/reduce function that has a reduce part everything works as expected.
-// We'll get into trouble if we want to reuse this document without reduce.
-// If we use the omitempty flag on the Reduce field it would get it's zero value false
-// which would not be sent to the server.
-// // func NewQueryParameters() QueryParameters {
-// // 	// reduce is the exception. the default would be true
-// // 	// but as have have more cases where we don't have a reduce function we set it false
-// // 	// set it to true if you really need it.
-// // 	return QueryParameters{
-// // 		Conflicts:       false,
-// // 		Descending:      false,
-// // 		Group:           false,
-// // 		IncludeDocs:     false,
-// // 		Attachments:     false,
-// // 		AttEncodingInfo: false,
-// // 		InclusiveEnd:    true,
-// // 		Reduce:          false,
-// // 		Skip:            0,
-// // 		UpdateSeq:       false,
-// // 	}
-// // }
 
 // ViewResponse is response for querying design documents.
 type ViewResponse struct {

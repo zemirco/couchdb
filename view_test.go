@@ -3,6 +3,8 @@ package couchdb
 import (
 	"fmt"
 	"testing"
+
+	"github.com/segmentio/pointer"
 )
 
 type DataDocument struct {
@@ -182,7 +184,7 @@ func TestDesignDocumentView(t *testing.T) {
 func TestViewGetWithQueryParameters(t *testing.T) {
 	view := dbView.View("test")
 	params := QueryParameters{
-		Key: String(fmt.Sprintf("%q", "foo1")),
+		Key: pointer.String(fmt.Sprintf("%q", "foo1")),
 	}
 	res, err := view.Get("foo", params)
 	if err != nil {
@@ -196,8 +198,8 @@ func TestViewGetWithQueryParameters(t *testing.T) {
 func TestViewGetWithStartKeyEndKey(t *testing.T) {
 	view := dbView.View("test")
 	params := QueryParameters{
-		StartKey: String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
-		EndKey:   String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
+		StartKey: pointer.String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
+		EndKey:   pointer.String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
 	}
 	res, err := view.Get("complex", params)
 	if err != nil {
@@ -211,8 +213,8 @@ func TestViewGetWithStartKeyEndKey(t *testing.T) {
 func TestViewGetWithInteger(t *testing.T) {
 	view := dbView.View("test")
 	params := QueryParameters{
-		StartKey: String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
-		EndKey:   String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
+		StartKey: pointer.String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
+		EndKey:   pointer.String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
 	}
 	res, err := view.Get("int", params)
 	if err != nil {
@@ -239,8 +241,8 @@ func TestViewGetWithReduce(t *testing.T) {
 func TestViewGetWithReduceAndGroup(t *testing.T) {
 	view := dbView.View("person")
 	params := QueryParameters{
-		Key:        String(fmt.Sprintf("%q", "female")),
-		GroupLevel: Int(1),
+		Key:        pointer.String(fmt.Sprintf("%q", "female")),
+		GroupLevel: pointer.Int(1),
 	}
 	res, err := view.Get("ageByGender", params)
 	if err != nil {
@@ -255,8 +257,8 @@ func TestViewGetWithReduceAndGroup(t *testing.T) {
 func TestViewGetWithoutReduce(t *testing.T) {
 	view := dbView.View("person")
 	params := QueryParameters{
-		Key:    String(fmt.Sprintf("%q", "male")),
-		Reduce: Bool(false),
+		Key:    pointer.String(fmt.Sprintf("%q", "male")),
+		Reduce: pointer.Bool(false),
 	}
 	res, err := view.Get("ageByGender", params)
 	if err != nil {
@@ -270,7 +272,7 @@ func TestViewGetWithoutReduce(t *testing.T) {
 func TestViewPost(t *testing.T) {
 	view := dbView.View("person")
 	params := QueryParameters{
-		Reduce: Bool(false),
+		Reduce: pointer.Bool(false),
 	}
 	res, err := view.Post("ageByGender", []string{"male"}, params)
 	if err != nil {
