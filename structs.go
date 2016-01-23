@@ -61,7 +61,8 @@ func (e *Error) Error() string {
 // CouchDoc describes interface for every couchdb document.
 // GetDocument() is just a dummy method for now to satisfy the interface.
 type CouchDoc interface {
-	GetDocument() *Document
+	GetID() string
+	GetRev() string
 }
 
 // Document is base struct which should be embedded by any other couchdb document.
@@ -71,9 +72,14 @@ type Document struct {
 	Attachments map[string]Attachment `json:"_attachments,omitempty"`
 }
 
-// GetDocument is just a dummy method to describe the CouchDoc interface
-func (d *Document) GetDocument() *Document {
-	return d
+// GetID returns document id
+func (d *Document) GetID() string {
+	return d.ID
+}
+
+// GetRev returns document revision
+func (d *Document) GetRev() string {
+	return d.Rev
 }
 
 // DesignDocument is a special type of CouchDB document that contains application code.

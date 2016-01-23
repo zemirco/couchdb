@@ -34,8 +34,7 @@ func (db *Database) Get(doc CouchDoc, id string) error {
 
 // Put document.
 func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
-	document := doc.GetDocument()
-	url := fmt.Sprintf("%s%s", db.URL, document.ID)
+	url := fmt.Sprintf("%s%s", db.URL, doc.GetID())
 	res, err := json.Marshal(doc)
 	if err != nil {
 		return nil, err
@@ -66,8 +65,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 
 // Delete document.
 func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
-	document := doc.GetDocument()
-	url := fmt.Sprintf("%s%s?rev=%s", db.URL, document.ID, document.Rev)
+	url := fmt.Sprintf("%s%s?rev=%s", db.URL, doc.GetID(), doc.GetRev())
 	body, err := db.Client.request("DELETE", url, nil, "application/json")
 	if err != nil {
 		return nil, err
@@ -80,8 +78,7 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse, error) {
 
 	// target url
-	document := doc.GetDocument()
-	url := fmt.Sprintf("%s%s", db.URL, document.ID)
+	url := fmt.Sprintf("%s%s", db.URL, doc.GetID())
 
 	// get file from disk
 	file, err := os.Open(path)
@@ -95,7 +92,11 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 	writer := multipart.NewWriter(&buffer)
 
 	// create first "application/json" document part
-	err = writeJSON(document, writer, file)
+	document := Document{
+		ID:  doc.GetID(),
+		Rev: doc.GetRev(),
+	}
+	err = writeJSON(&document, writer, file)
 	if err != nil {
 		return nil, err
 	}
