@@ -38,7 +38,7 @@ func NewAuthClient(username, password, url string) (*Client, error) {
 
 // Info returns some information about the server
 func (c *Client) Info() (*Server, error) {
-	body, err := c.request("GET", c.URL, nil, "application/json")
+	body, err := c.request(http.MethodGet, c.URL, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (c *Client) Info() (*Server, error) {
 // Log returns logs from database
 func (c *Client) Log() (string, error) {
 	url := fmt.Sprintf("%s_log", c.URL)
-	body, err := c.request("GET", url, nil, "")
+	body, err := c.request(http.MethodGet, url, nil, "")
 	if err != nil {
 		return "", err
 	}
@@ -65,7 +65,7 @@ func (c *Client) Log() (string, error) {
 // ActiveTasks returns list of currently running tasks
 func (c *Client) ActiveTasks() ([]Task, error) {
 	url := fmt.Sprintf("%s_active_tasks", c.URL)
-	body, err := c.request("GET", url, nil, "application/json")
+	body, err := c.request(http.MethodGet, url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +77,7 @@ func (c *Client) ActiveTasks() ([]Task, error) {
 // All returns list of all databases on server
 func (c *Client) All() ([]string, error) {
 	url := fmt.Sprintf("%s_all_dbs", c.URL)
-	body, err := c.request("GET", url, nil, "application/json")
+	body, err := c.request(http.MethodGet, url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (c *Client) All() ([]string, error) {
 // Get database.
 func (c *Client) Get(name string) (*DatabaseInfo, error) {
 	url := fmt.Sprintf("%s%s", c.URL, name)
-	body, err := c.request("GET", url, nil, "application/json")
+	body, err := c.request(http.MethodGet, url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +101,7 @@ func (c *Client) Get(name string) (*DatabaseInfo, error) {
 // Create database.
 func (c *Client) Create(name string) (*DatabaseResponse, error) {
 	url := fmt.Sprintf("%s%s", c.URL, name)
-	body, err := c.request("PUT", url, nil, "application/json")
+	body, err := c.request(http.MethodPut, url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (c *Client) Create(name string) (*DatabaseResponse, error) {
 // Delete database.
 func (c *Client) Delete(name string) (*DatabaseResponse, error) {
 	url := fmt.Sprintf("%s%s", c.URL, name)
-	body, err := c.request("DELETE", url, nil, "application/json")
+	body, err := c.request(http.MethodDelete, url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +128,7 @@ func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
 		return nil, err
 	}
 	data := bytes.NewReader(res)
-	body, err := c.request("PUT", url, data, "application/json")
+	body, err := c.request(http.MethodPut, url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -139,7 +139,7 @@ func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
 // GetUser returns user by given name
 func (c *Client) GetUser(name string) (*User, error) {
 	url := fmt.Sprintf("%s_users/org.couchdb.user:%s", c.URL, name)
-	body, err := c.request("GET", url, nil, "application/json")
+	body, err := c.request(http.MethodGet, url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (c *Client) CreateSession(name, password string) (*PostSessionResponse, err
 		return nil, err
 	}
 	data := bytes.NewReader(res)
-	body, err := c.request("POST", url, data, "application/json")
+	body, err := c.request(http.MethodPost, url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (c *Client) CreateSession(name, password string) (*PostSessionResponse, err
 // GetSession returns session for currently logged in user
 func (c *Client) GetSession() (*GetSessionResponse, error) {
 	url := fmt.Sprintf("%s_session", c.URL)
-	body, err := c.request("GET", url, nil, "")
+	body, err := c.request(http.MethodGet, url, nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (c *Client) GetSession() (*GetSessionResponse, error) {
 // DeleteSession removes current session and logs out user
 func (c *Client) DeleteSession() (*DatabaseResponse, error) {
 	url := fmt.Sprintf("%s_session", c.URL)
-	body, err := c.request("DELETE", url, nil, "")
+	body, err := c.request(http.MethodDelete, url, nil, "")
 	if err != nil {
 		return nil, err
 	}

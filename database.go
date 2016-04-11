@@ -24,7 +24,7 @@ func (db *Database) Head(id string) (*http.Response, error) {
 // Get document.
 func (db *Database) Get(doc CouchDoc, id string) error {
 	url := fmt.Sprintf("%s%s", db.URL, id)
-	body, err := db.Client.request("GET", url, nil, "application/json")
+	body, err := db.Client.request(http.MethodGet, url, nil, "application/json")
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
 		return nil, err
 	}
 	data := bytes.NewReader(res)
-	body, err := db.Client.request("PUT", url, data, "application/json")
+	body, err := db.Client.request(http.MethodPut, url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 		return nil, err
 	}
 	data := bytes.NewReader(res)
-	body, err := db.Client.request("POST", db.URL, data, "application/json")
+	body, err := db.Client.request(http.MethodPost, db.URL, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 // Delete document.
 func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	url := fmt.Sprintf("%s%s?rev=%s", db.URL, doc.GetID(), doc.GetRev())
-	body, err := db.Client.request("DELETE", url, nil, "application/json")
+	body, err := db.Client.request(http.MethodDelete, url, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 
 	// create http request
 	contentType := fmt.Sprintf("multipart/related; boundary=%q", writer.Boundary())
-	body, err := db.Client.request("PUT", url, &buffer, contentType)
+	body, err := db.Client.request(http.MethodPut, url, &buffer, contentType)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (db *Database) Bulk(docs interface{}) ([]DocumentResponse, error) {
 	}
 	url := fmt.Sprintf("%s_bulk_docs", db.URL)
 	data := bytes.NewReader(res)
-	body, err := db.Client.request("POST", url, data, "application/json")
+	body, err := db.Client.request(http.MethodPost, url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
