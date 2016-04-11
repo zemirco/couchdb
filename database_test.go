@@ -135,6 +135,25 @@ func TestDocumentBulkDocs(t *testing.T) {
 	}
 }
 
+func TestPutAttachment(t *testing.T) {
+	// get existing document
+	doc := &DummyDocument{}
+	err := db.Get(doc, "testid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%#v", doc)
+	// try updating existing document with attachments
+	doc.Foo = "baz"
+	res, err := db.Put(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.ID != "testid" || res.Ok == false {
+		t.Error("put document response error")
+	}
+}
+
 func TestAfter(t *testing.T) {
 	t.Log("deleting dummy database")
 	_, err := client.Delete("dummy")

@@ -103,10 +103,23 @@ type DesignDocumentView struct {
 
 // Attachment uploads a document in multipart/related format.
 // http://docs.couchdb.org/en/latest/api/document/common.html#creating-multiple-attachments
+// type AttachmentMetadata struct {
+// 	Follows     bool   `json:"follows"`
+// 	ContentType string `json:"content_type"`
+// 	Length      int64  `json:"length"`
+// }
+
+// http://docs.couchdb.org/en/stable/api/document/common.html#attachments
 type Attachment struct {
-	Follows     bool   `json:"follows"`
-	ContentType string `json:"content_type"`
-	Length      int64  `json:"length"`
+	ContentType   string  `json:"content_type"`
+	Data          string  `json:"data"`
+	Digest        string  `json:"digest"`
+	EncodedLength float64 `json:"encoded_length"`
+	Encoding      string  `json:"encoding"`
+	Length        int64   `json:"length"`
+	RevPos        float64 `json:"revpos"`
+	Stub          bool    `json:"stub"`
+	Follows       bool    `json:"follows"`
 }
 
 // DocumentResponse is response for multipart/related file upload.
