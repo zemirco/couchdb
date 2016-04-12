@@ -112,6 +112,26 @@ func TestDocumentPutAttachment(t *testing.T) {
 	}
 }
 
+// Test added because updating an existing document that had an attachment caused an error.
+// After adding more fields to Attachment struct it now works.
+func TestUpdateDocumentWithAttachment(t *testing.T) {
+	// get existing document
+	doc := &DummyDocument{}
+	err := db.Get(doc, "testid")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// update document with attachment
+	doc.Foo = "awesome"
+	res, err := db.Put(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.ID != "testid" || res.Ok == false {
+		t.Error("put document response error")
+	}
+}
+
 func TestDocumentBulkDocs(t *testing.T) {
 	// first dummy document
 	doc1 := DummyDocument{
@@ -132,25 +152,6 @@ func TestDocumentBulkDocs(t *testing.T) {
 	}
 	if res[0].Ok != true || res[1].Ok != true {
 		t.Error("bulk docs error")
-	}
-}
-
-func TestPutAttachment(t *testing.T) {
-	// get existing document
-	doc := &DummyDocument{}
-	err := db.Get(doc, "testid")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("%#v", doc)
-	// try updating existing document with attachments
-	doc.Foo = "baz"
-	res, err := db.Put(doc)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if res.ID != "testid" || res.Ok == false {
-		t.Error("put document response error")
 	}
 }
 
