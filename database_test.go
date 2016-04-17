@@ -155,6 +155,19 @@ func TestDocumentBulkDocs(t *testing.T) {
 	}
 }
 
+func TestAllDocs(t *testing.T) {
+	res, err := db.AllDocs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.TotalRows != 3 {
+		t.Errorf("expected total rows equals 3 but got %v", res.TotalRows)
+	}
+	if len(res.Rows) != 3 {
+		t.Errorf("expected length rows equals 3 but got %v", len(res.Rows))
+	}
+}
+
 func TestAfter(t *testing.T) {
 	t.Log("deleting dummy database")
 	_, err := client.Delete("dummy")

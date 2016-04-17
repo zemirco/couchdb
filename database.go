@@ -16,6 +16,17 @@ type Database struct {
 	URL string
 }
 
+// AllDocs returns all documents in selected database.
+func (db *Database) AllDocs() (*ViewResponse, error) {
+	url := fmt.Sprintf("%s_all_docs", db.URL)
+	body, err := db.Client.request(http.MethodGet, url, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	return newViewResponse(body)
+}
+
 // Head request.
 func (db *Database) Head(id string) (*http.Response, error) {
 	return http.Head(db.URL + id)
