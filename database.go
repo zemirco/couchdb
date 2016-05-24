@@ -85,6 +85,22 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	return newDocumentResponse(body)
 }
 
+// Purge document.
+func (db *Database) Purge(doc CouchDoc) (*DocumentResponse, error) {
+	url := fmt.Sprintf("%s%s", db.URL, "_purge")
+	res, err := json.Marshal(doc)
+	if err != nil {
+		return nil, err
+	}
+	data := bytes.NewReader(res)
+	body, err := db.Client.request(http.MethodPost, url, data, "application/json")
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	return newDocumentResponse(body)
+}
+
 // PutAttachment adds attachment to document
 func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse, error) {
 
