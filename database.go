@@ -88,7 +88,8 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 // Purge document.
 func (db *Database) Purge(doc CouchDoc) (*DocumentResponse, error) {
 	url := fmt.Sprintf("%s%s", db.URL, "_purge")
-	res, err := json.Marshal(doc)
+	purgeDoc := map[string]interface{}{doc.GetID(): []string{doc.GetRev()}}
+	res, err := json.Marshal(purgeDoc)
 	if err != nil {
 		return nil, err
 	}
