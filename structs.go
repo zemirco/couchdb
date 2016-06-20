@@ -88,6 +88,7 @@ type DesignDocument struct {
 	Document
 	Language string                        `json:"language,omitempty"`
 	Views    map[string]DesignDocumentView `json:"views,omitempty"`
+	Filters  map[string]string             `json:"filters,omitempty"`
 }
 
 // Name returns design document name without the "_design/" prefix
