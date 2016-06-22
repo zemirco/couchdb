@@ -137,7 +137,7 @@ type Task struct {
 	Task         string
 	TotalChanges int `json:"total_changes"`
 	Type         string
-	UpdatedOn    string `json:"updated_on"`
+	UpdatedOn    int `json:"updated_on"`
 }
 
 // QueryParameters is struct to define url query parameters for design documents.

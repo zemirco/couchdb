@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/cookiejar"
+	"time"
 )
 
 // Client holds all info for database client
@@ -45,21 +45,6 @@ func (c *Client) Info() (*Server, error) {
 	defer body.Close()
 	server := &Server{}
 	return server, json.NewDecoder(body).Decode(&server)
-}
-
-// Log returns logs from database
-func (c *Client) Log() (string, error) {
-	url := fmt.Sprintf("%s_log", c.URL)
-	body, err := c.request(http.MethodGet, url, nil, "")
-	if err != nil {
-		return "", err
-	}
-	defer body.Close()
-	log, err := ioutil.ReadAll(body)
-	if err != nil {
-		return "", err
-	}
-	return (string(log)), nil
 }
 
 // ActiveTasks returns list of currently running tasks
@@ -202,6 +187,123 @@ func (c *Client) Use(name string) Database {
 		URL:    c.URL + name + "/",
 		Client: c,
 	}
+}
+
+// ReplicationRequest is JSON object for post request to _replicate URL.
+//
+// http://docs.couchdb.org/en/1.6.1/api/server/common.html#replicate
+type ReplicationRequest struct {
+	Document
+	Cancel       bool              `json:"cancel,omitempty"`
+	Continuous   bool              `json:"continuous,omitempty"`
+	CreateTarget bool              `json:"create_target,omitempty"`
+	DocIDs       []string          `json:"doc_ids,omitempty"`
+	Proxy        string            `json:"proxy,omitempty"`
+	Source       string            `json:"source,omitempty"`
+	Target       string            `json:"target,omitempty"`
+	Filter       string            `json:"filter,omitempty"`
+	QueryParams  map[string]string `json:"query_params,omitempty"`
+}
+
+// ReplicationResponse is JSON object for response from post request to _replicate URL.
+//
+// http://docs.couchdb.org/en/1.6.1/api/server/common.html#replicate
+type ReplicationResponse struct {
+	History              []ReplicationHistory `json:"history"`
+	Ok                   bool                 `json:"ok"`
+	ReplicationIDVersion float64              `json:"replication_id_version"`
+	SessionID            string               `json:"session_id"`
+	SourceLastSeq        float64              `json:"source_last_seq"`
+}
+
+// RFC1123 is time format used by CouchDB for history fields.
+// We have to define a custom type because Go uses RFC 3339 as default JSON time format.
+//
+// https://golang.org/pkg/time/#Time.MarshalJSON
+// http://docs.couchdb.org/en/1.6.1/api/server/common.html#replicate
+type RFC1123 time.Time
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+//
+// https://golang.org/pkg/encoding/json/#Unmarshaler
+func (r *RFC1123) UnmarshalJSON(data []byte) error {
+	var tmp string
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	t, err := time.Parse(time.RFC1123, tmp)
+	if err != nil {
+		return err
+	}
+	*r = RFC1123(t)
+	return nil
+}
+
+// ReplicationHistory is part of the ReplicationResponse JSON object.
+//
+// http://docs.couchdb.org/en/1.6.1/api/server/common.html#replicate
+type ReplicationHistory struct {
+	DocWriteFailures float64 `json:"doc_write_failures"`
+	DocsRead         float64 `json:"docs_read"`
+	DocsWritten      float64 `json:"docs_written"`
+	EndLastSeq       float64 `json:"end_last_seq"`
+	EndTime          RFC1123 `json:"end_time"`
+	MissingChecked   float64 `json:"missing_checked"`
+	MissingFound     float64 `json:"missing_found"`
+	RecordedSeq      float64 `json:"recorded_seq"`
+	SessionID        string  `json:"session_id"`
+	StartLastSeq     float64 `json:"start_last_seq"`
+	StartTime        RFC1123 `json:"start_time"`
+}
+
+// Timestamp is time format used by CouchDB for the _replication_state_time field.
+// It simply is a unix timestamp (number of seconds since 1 Jan 1970).
+// We have to define our own custom type because Go uses RFC 3339 as default JSON time format.
+//
+// ttp://docs.couchdb.org/en/latest/replication/replicator.html#basics
+type Timestamp time.Time
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+//
+// https://golang.org/pkg/encoding/json/#Unmarshaler
+func (t *Timestamp) UnmarshalJSON(data []byte) error {
+	var tmp float64
+	if err := json.Unmarshal(data, &tmp); err != nil {
+		return err
+	}
+	*t = Timestamp(time.Unix(int64(tmp), 0))
+	return nil
+}
+
+// Replication is a document from the _replicator database.
+// ReplicationState, ReplicationStateTime, ReplicationStateReason and ReplicationID are
+// automatically updated by CouchDB.
+//
+// http://docs.couchdb.org/en/1.6.1/replication/replicator.html#basics
+type Replication struct {
+	ReplicationRequest
+	ReplicationState       string    `json:"_replication_state"`
+	ReplicationStateTime   Timestamp `json:"_replication_state_time"`
+	ReplicationStateReason string    `json:"_replication_state_reason"`
+	ReplicationID          string    `json:"_replication_id"`
+}
+
+// Replicate sends POST request to the _replicate URL.
+//
+// http://docs.couchdb.org/en/1.6.1/api/server/common.html#replicate
+func (c *Client) Replicate(req ReplicationRequest) (*ReplicationResponse, error) {
+	res, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	data := bytes.NewReader(res)
+	body, err := c.request(http.MethodPost, c.URL+"_replicate", data, "application/json")
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	r := &ReplicationResponse{}
+	return r, json.NewDecoder(body).Decode(&r)
 }
 
 // internal helper function for http requests

@@ -3,7 +3,6 @@ package couchdb
 import (
 	"net/http"
 	"reflect"
-	"regexp"
 	"testing"
 )
 
@@ -16,17 +15,6 @@ func TestInfo(t *testing.T) {
 	}
 	if info.Couchdb != "Welcome" {
 		t.Error("Couchdb error")
-	}
-}
-
-func TestLog(t *testing.T) {
-	log, err := client.Log()
-	if err != nil {
-		t.Fatal(err)
-	}
-	valid := regexp.MustCompile("[info]")
-	if valid.MatchString(log) == false {
-		t.Error("invalid log")
 	}
 }
 
@@ -191,5 +179,175 @@ func TestUse(t *testing.T) {
 	db := client.Use("_users")
 	if db.URL != "http://127.0.0.1:5984/_users/" {
 		t.Error("use error")
+	}
+}
+
+type animal struct {
+	Document
+	Type   string `json:"type"`
+	Animal string `json:"animal"`
+	Owner  string `json:"owner"`
+}
+
+func TestReplication(t *testing.T) {
+	name := "replication"
+	name2 := "replication2"
+	// create database
+	res, err := client.Create(name)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("%#v", res)
+	// add some documents to database
+	db := client.Use(name)
+	for _, a := range []string{"dog", "mouse", "cat"} {
+		doc := &animal{
+			Type:   "animal",
+			Animal: a,
+		}
+		if _, err := db.Post(doc); err != nil {
+			t.Error(err)
+		}
+	}
+	// replicate
+	req := ReplicationRequest{
+		CreateTarget: true,
+		Source:       "http://localhost:5984/" + name,
+		Target:       "http://localhost:5984/" + name2,
+	}
+	r, err := c.Replicate(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("%#v", r)
+	if !r.Ok {
+		t.Error("expected ok to be true but got false instead")
+	}
+	// remove both databases
+	for _, d := range []string{name, name2} {
+		if _, err := client.Delete(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestReplicationFilter(t *testing.T) {
+	dbName := "replication_filter"
+	dbName2 := "replication_filter2"
+	// create database
+	if _, err := client.Create(dbName); err != nil {
+		t.Error(err)
+	}
+	// add some documents to database
+	db := client.Use(dbName)
+	docs := []animal{
+		{
+			Type:   "animal",
+			Animal: "dog",
+			Owner:  "john",
+		},
+		{
+			Type:   "animal",
+			Animal: "cat",
+			Owner:  "john",
+		},
+		{
+			Type:   "animal",
+			Animal: "horse",
+			Owner:  "steve",
+		},
+	}
+	for _, doc := range docs {
+		if _, err := db.Post(&doc); err != nil {
+			t.Error(err)
+		}
+	}
+	// create view document with filter function in first database
+	designDocument := &DesignDocument{
+		Document: Document{
+			ID: "_design/animals",
+		},
+		Language: "javascript",
+		Filters: map[string]string{
+			"byOwner": `
+				function(doc, req) {
+					if (doc.owner === req.query.owner) {
+						return true
+					}
+					return false
+				}
+			`,
+		},
+	}
+	if _, err := db.Post(designDocument); err != nil {
+		t.Error(err)
+	}
+	// create replication with filter function
+	req := ReplicationRequest{
+		CreateTarget: true,
+		Source:       "http://localhost:5984/" + dbName,
+		Target:       "http://localhost:5984/" + dbName2,
+		Filter:       "animals/byOwner",
+		QueryParams: map[string]string{
+			"owner": "john",
+		},
+	}
+	if _, err := c.Replicate(req); err != nil {
+		t.Error(err)
+	}
+	// check replicated database
+	db = client.Use(dbName2)
+	allDocs, err := db.AllDocs()
+	if err != nil {
+		t.Error(err)
+	}
+	if len(allDocs.Rows) != 2 {
+		t.Errorf("expected exactly two documents but got %d instead", len(allDocs.Rows))
+	}
+	// remove both databases
+	for _, d := range []string{dbName, dbName2} {
+		if _, err := client.Delete(d); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+// test continuous replication to test getting replication document
+// with custom time format.
+func TestReplicationContinuous(t *testing.T) {
+	dbName := "continuous"
+	dbName2 := "continuous2"
+	// create database
+	if _, err := client.Create(dbName); err != nil {
+		t.Error(err)
+	}
+	// create replication document inside _replicate database
+	req := ReplicationRequest{
+		Document: Document{
+			ID: "awesome",
+		},
+		Continuous:   true,
+		CreateTarget: true,
+		Source:       "http://localhost:5984/" + dbName,
+		Target:       "http://localhost:5984/" + dbName2,
+	}
+	res, err := c.Replicate(req)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("%#v", res)
+	tasks, err := c.ActiveTasks()
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("%#v", tasks)
+	if tasks[0].Type != "replication" {
+		t.Errorf("expected type replication but got %s instead", tasks[0].Type)
+	}
+	// remove both databases
+	for _, d := range []string{dbName, dbName2} {
+		if _, err := client.Delete(d); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
