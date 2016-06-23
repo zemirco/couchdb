@@ -168,6 +168,50 @@ func TestAllDocs(t *testing.T) {
 	}
 }
 
+func TestPurge(t *testing.T) {
+	dbName := "purge"
+	// create database
+	if _, err := client.Create(dbName); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(dbName)
+	// create documents
+	doc := &DummyDocument{
+		Foo:  "bar",
+		Beep: "bopp",
+	}
+	postResponse, err := db.Post(doc)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("%#v", postResponse)
+	// purge
+	req := map[string][]string{
+		postResponse.ID: {
+			postResponse.Rev,
+		},
+	}
+	purgeResponse, err := db.Purge(req)
+	if err != nil {
+		t.Error(err)
+	}
+	t.Logf("%#v", purgeResponse)
+	if purgeResponse.PurgeSeq != 1 {
+		t.Errorf("expected purge seq to be 1 but got %d instead", purgeResponse.PurgeSeq)
+	}
+	revisions, ok := purgeResponse.Purged[postResponse.ID]
+	if !ok {
+		t.Error("expected to find entry at post response ID but could not find any")
+	}
+	if revisions[0] != postResponse.Rev {
+		t.Error("expected purged revision to be the same as posted document revision")
+	}
+	// remove database
+	if _, err := client.Delete(dbName); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestAfter(t *testing.T) {
 	t.Log("deleting dummy database")
 	_, err := client.Delete("dummy")

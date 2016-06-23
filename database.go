@@ -173,3 +173,27 @@ func (db *Database) View(name string) View {
 		Database: db,
 	}
 }
+
+// PurgeResponse is response from POST request to the _purge URL.
+type PurgeResponse struct {
+	PurgeSeq float64 `json:"purge_seq"`
+	Purged   map[string][]string
+}
+
+// Purge permanently removes the references to deleted documents from the database.
+//
+// http://docs.couchdb.org/en/1.6.1/api/database/misc.html
+func (db *Database) Purge(req map[string][]string) (*PurgeResponse, error) {
+	res, err := json.Marshal(req)
+	if err != nil {
+		return nil, err
+	}
+	data := bytes.NewReader(res)
+	body, err := db.Client.request(http.MethodPost, db.URL+"_purge", data, "application/json")
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	response := &PurgeResponse{}
+	return response, json.NewDecoder(body).Decode(&response)
+}
