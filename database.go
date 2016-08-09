@@ -197,3 +197,45 @@ func (db *Database) Purge(req map[string][]string) (*PurgeResponse, error) {
 	response := &PurgeResponse{}
 	return response, json.NewDecoder(body).Decode(&response)
 }
+
+type Element struct {
+	Names []string `json:"names"`
+	Roles []string `json:"roles"`
+}
+
+// SecurityDocument describes document _security document.
+type SecurityDocument struct {
+	Admins  Element `json:"admins"`
+	Members Element `json:"members"`
+}
+
+// GetSecurity returns security document.
+// http://docs.couchdb.org/en/latest/api/database/security.html
+func (db *Database) GetSecurity() (*SecurityDocument, error) {
+	url := fmt.Sprintf("%s_security", db.URL)
+	body, err := db.Client.request(http.MethodGet, url, nil, "application/json")
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	var secDoc SecurityDocument
+	return &secDoc, json.NewDecoder(body).Decode(&secDoc)
+}
+
+// PutSecurity sets the security object for the given database.
+// http://docs.couchdb.org/en/latest/api/database/security.html#put--db-_security
+func (db *Database) PutSecurity(secDoc SecurityDocument) (*DatabaseResponse, error) {
+	url := fmt.Sprintf("%s_security", db.URL)
+	b, err := json.Marshal(secDoc)
+	if err != nil {
+		return nil, err
+	}
+	data := bytes.NewReader(b)
+	body, err := db.Client.request(http.MethodPut, url, data, "application/json")
+	if err != nil {
+		return nil, err
+	}
+	defer body.Close()
+	res := new(DatabaseResponse)
+	return res, json.NewDecoder(body).Decode(res)
+}

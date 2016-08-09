@@ -212,6 +212,56 @@ func TestPurge(t *testing.T) {
 	}
 }
 
+func TestSecurity(t *testing.T) {
+	dbName := "sec"
+	// create database
+	if _, err := client.Create(dbName); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(dbName)
+	// test putting security document first
+	secDoc := SecurityDocument{
+		Admins: Element{
+			Names: []string{
+				"admin1",
+			},
+			Roles: []string{
+				"",
+			},
+		},
+		Members: Element{
+			Names: []string{
+				"member1",
+			},
+			Roles: []string{
+				"",
+			},
+		},
+	}
+	res, err := db.PutSecurity(secDoc)
+	if err != nil {
+		t.Error(err)
+	}
+	if res.Ok != true {
+		t.Error("expected true but got false")
+	}
+	// test getting security document
+	doc, err := db.GetSecurity()
+	if err != nil {
+		t.Error(err)
+	}
+	if doc.Admins.Names[0] != "admin1" {
+		t.Errorf("expected name admin1 but got %s instead", doc.Admins.Names[0])
+	}
+	if doc.Members.Names[0] != "member1" {
+		t.Errorf("expected name member1 but got %s instead", doc.Members.Names[0])
+	}
+	// remove database
+	if _, err := client.Delete(dbName); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestAfter(t *testing.T) {
 	t.Log("deleting dummy database")
 	_, err := client.Delete("dummy")
