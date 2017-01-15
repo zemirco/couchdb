@@ -34,7 +34,7 @@ func TestDocumentPost(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Ok == false {
+	if !res.Ok {
 		t.Error("post document error")
 	}
 }
@@ -73,7 +73,7 @@ func TestDocumentPut(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != "testid" || res.Ok == false {
+	if res.ID != "testid" || !res.Ok {
 		t.Error("put document response error")
 	}
 }
@@ -90,7 +90,7 @@ func TestDocumentDelete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != "testid" || res.Ok == false {
+	if res.ID != "testid" || !res.Ok {
 		t.Error("delete document response error")
 	}
 }
@@ -107,7 +107,7 @@ func TestDocumentPutAttachment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != "testid" || res.Ok == false {
+	if res.ID != "testid" || !res.Ok {
 		t.Error("put attachment error")
 	}
 }
@@ -127,7 +127,7 @@ func TestUpdateDocumentWithAttachment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != "testid" || res.Ok == false {
+	if res.ID != "testid" || !res.Ok {
 		t.Error("put document response error")
 	}
 }
@@ -150,13 +150,13 @@ func TestDocumentBulkDocs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res[0].Ok != true || res[1].Ok != true {
+	if !res[0].Ok || !res[1].Ok {
 		t.Error("bulk docs error")
 	}
 }
 
 func TestAllDocs(t *testing.T) {
-	res, err := db.AllDocs()
+	res, err := db.AllDocs(nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +197,7 @@ func TestPurge(t *testing.T) {
 	}
 	t.Logf("%#v", purgeResponse)
 	if purgeResponse.PurgeSeq != 1 {
-		t.Errorf("expected purge seq to be 1 but got %d instead", purgeResponse.PurgeSeq)
+		t.Errorf("expected purge seq to be 1 but got %v instead", purgeResponse.PurgeSeq)
 	}
 	revisions, ok := purgeResponse.Purged[postResponse.ID]
 	if !ok {
@@ -242,7 +242,7 @@ func TestSecurity(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if res.Ok != true {
+	if !res.Ok {
 		t.Error("expected true but got false")
 	}
 	// test getting security document

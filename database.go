@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+
+	"github.com/google/go-querystring/query"
 )
 
 // Database performs actions on certain database
@@ -17,8 +19,13 @@ type Database struct {
 }
 
 // AllDocs returns all documents in selected database.
-func (db *Database) AllDocs() (*ViewResponse, error) {
-	url := fmt.Sprintf("%s_all_docs", db.URL)
+// http://docs.couchdb.org/en/latest/api/database/bulk-api.html
+func (db *Database) AllDocs(params *QueryParameters) (*ViewResponse, error) {
+	q, err := query.Values(params)
+	if err != nil {
+		return nil, err
+	}
+	url := fmt.Sprintf("%s_all_docs?%s", db.URL, q.Encode())
 	body, err := db.Client.request(http.MethodGet, url, nil, "")
 	if err != nil {
 		return nil, err
@@ -198,6 +205,7 @@ func (db *Database) Purge(req map[string][]string) (*PurgeResponse, error) {
 	return response, json.NewDecoder(body).Decode(&response)
 }
 
+// Element is single element inside Admins/Members in security document.
 type Element struct {
 	Names []string `json:"names"`
 	Roles []string `json:"roles"`

@@ -24,7 +24,7 @@ func TestActiveTasks(t *testing.T) {
 		t.Fatal(err)
 	}
 	out := make([]Task, 0)
-	if reflect.DeepEqual(out, res) == false {
+	if !reflect.DeepEqual(out, res) {
 		t.Error("active tasks should be an empty array")
 	}
 }
@@ -47,7 +47,7 @@ func TestGet(t *testing.T) {
 	if info.DbName != "_users" {
 		t.Error("DbName error")
 	}
-	if info.CompactRunning != false {
+	if info.CompactRunning {
 		t.Error("CompactRunning error")
 	}
 }
@@ -57,7 +57,7 @@ func TestCreate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status.Ok != true {
+	if !status.Ok {
 		t.Error("status error")
 	}
 }
@@ -80,7 +80,7 @@ func TestCreateUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Ok == false || res.ID != "org.couchdb.user:john" {
+	if !res.Ok || res.ID != "org.couchdb.user:john" {
 		t.Error("create user error")
 	}
 }
@@ -90,7 +90,7 @@ func TestCreateSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Ok == false || res.Name != "john" {
+	if !res.Ok || res.Name != "john" {
 		t.Error("create session error")
 	}
 }
@@ -100,7 +100,7 @@ func TestGetSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if session.Ok == false || session.UserContext.Name != "john" {
+	if !session.Ok || session.UserContext.Name != "john" {
 		t.Error("get session error")
 	}
 }
@@ -110,7 +110,7 @@ func TestDeleteSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Ok == false {
+	if !res.Ok {
 		t.Error("delete session error")
 	}
 }
@@ -134,7 +134,7 @@ func TestDeleteUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Ok == false || res.ID != "org.couchdb.user:john" {
+	if !res.Ok || res.ID != "org.couchdb.user:john" {
 		t.Error("delete user error")
 	}
 }
@@ -144,11 +144,11 @@ func TestGetSessionAdmin(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if session.Ok == false {
+	if !session.Ok {
 		t.Error("session response is false")
 	}
 	roles := []string{"_admin"}
-	if reflect.DeepEqual(roles, session.UserContext.Roles) == false {
+	if !reflect.DeepEqual(roles, session.UserContext.Roles) {
 		t.Error("session roles are wrong")
 	}
 }
@@ -158,7 +158,7 @@ func TestDelete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if status.Ok != true {
+	if !status.Ok {
 		t.Error("status error")
 	}
 }
@@ -297,7 +297,7 @@ func TestReplicationFilter(t *testing.T) {
 	}
 	// check replicated database
 	db = client.Use(dbName2)
-	allDocs, err := db.AllDocs()
+	allDocs, err := db.AllDocs(nil)
 	if err != nil {
 		t.Error(err)
 	}

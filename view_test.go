@@ -176,7 +176,7 @@ func TestDesignDocumentView(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, ok := doc.Views["foo"]
-	if ok == false {
+	if !ok {
 		t.Error("design document view error")
 	}
 }
