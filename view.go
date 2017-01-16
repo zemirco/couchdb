@@ -23,7 +23,7 @@ func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 		return nil, err
 	}
 	uri := fmt.Sprintf("%s_view/%s?%s", v.URL, name, q.Encode())
-	body, err := v.Database.Client.request(http.MethodGet, uri, nil, "")
+	body, err := v.Database.Client.Request(http.MethodGet, uri, nil, "")
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (v *View) Post(name string, keys []string, params QueryParameters) (*ViewRe
 	}
 	url := fmt.Sprintf("%s_view/%s?%s", v.URL, name, q.Encode())
 	data := bytes.NewReader(res)
-	body, err := v.Database.Client.request(http.MethodPost, url, data, "application/json")
+	body, err := v.Database.Client.Request(http.MethodPost, url, data, "application/json")
 	if err != nil {
 		return nil, err
 	}
