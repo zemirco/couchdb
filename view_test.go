@@ -131,9 +131,9 @@ func TestViewBefore(t *testing.T) {
 		{"Sophia", 66, "female"},
 		{"Chloe", 12, "female"},
 	}
-	people := make([]Person, len(data))
+	people := make([]CouchDoc, len(data))
 	for index, d := range data {
-		people[index] = Person{
+		people[index] = &Person{
 			Type:   "person",
 			Name:   d.Name,
 			Age:    d.Age,

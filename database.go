@@ -7,7 +7,6 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
-	"reflect"
 
 	"github.com/google/go-querystring/query"
 )
@@ -145,16 +144,9 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 // at the same time within a single request. The basic operation is similar to
 // creating or updating a single document, except that you batch
 // the document structure and information.
-func (db *Database) Bulk(docs interface{}) ([]DocumentResponse, error) {
-	// convert to []interface{}
-	val := reflect.ValueOf(docs)
-	documents := make([]interface{}, val.Len())
-	for i := 0; i < val.Len(); i++ {
-		documents[i] = val.Index(i).Interface()
-	}
-	// create bulk docs
+func (db *Database) Bulk(docs []CouchDoc) ([]DocumentResponse, error) {
 	bulk := BulkDoc{
-		Docs: documents,
+		Docs: docs,
 	}
 	res, err := json.Marshal(bulk)
 	if err != nil {

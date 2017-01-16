@@ -134,17 +134,17 @@ func TestUpdateDocumentWithAttachment(t *testing.T) {
 
 func TestDocumentBulkDocs(t *testing.T) {
 	// first dummy document
-	doc1 := DummyDocument{
+	doc1 := &DummyDocument{
 		Foo:  "foo1",
 		Beep: "beep1",
 	}
 	// second dummy document
-	doc2 := DummyDocument{
+	doc2 := &DummyDocument{
 		Foo:  "foo2",
 		Beep: "beep2",
 	}
 	// slice of dummy document
-	docs := []DummyDocument{doc1, doc2}
+	docs := []CouchDoc{doc1, doc2}
 
 	res, err := db.Bulk(docs)
 	if err != nil {
