@@ -8,7 +8,7 @@ import (
 )
 
 // create your own document
-type DummyDocument struct {
+type dummyDocument struct {
 	couchdb.Document
 	Foo  string `json:"foo"`
 	Beep string `json:"beep"`
@@ -41,7 +41,7 @@ func main() {
 
 	// use your new "dummy" database and create a document
 	db := client.Use("dummy")
-	doc := &DummyDocument{
+	doc := &dummyDocument{
 		Foo:  "bar",
 		Beep: "bopp",
 	}
