@@ -759,7 +759,7 @@ func TestViewBefore(t *testing.T) {
 		},
 		Language: "javascript",
 		Views: map[string]DesignDocumentView{
-			"foo": DesignDocumentView{
+			"foo": {
 				Map: `
 					function(doc) {
 						if (doc.type === 'data') {
@@ -768,7 +768,7 @@ func TestViewBefore(t *testing.T) {
 					}
 				`,
 			},
-			"int": DesignDocumentView{
+			"int": {
 				Map: `
 					function(doc) {
 						if (doc.type === 'data') {
@@ -777,7 +777,7 @@ func TestViewBefore(t *testing.T) {
 					}
 				`,
 			},
-			"complex": DesignDocumentView{
+			"complex": {
 				Map: `
 					function(doc) {
 						if (doc.type === 'data') {
@@ -798,7 +798,7 @@ func TestViewBefore(t *testing.T) {
 		},
 		Language: "javascript",
 		Views: map[string]DesignDocumentView{
-			"ageByGender": DesignDocumentView{
+			"ageByGender": {
 				Map: `
 					function(doc) {
 						if (doc.type === 'person') {
