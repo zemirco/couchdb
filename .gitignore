@@ -1,2 +1,3 @@
 .DS_Store
 tmp.go
+coverage.out

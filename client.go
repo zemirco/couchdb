@@ -335,6 +335,5 @@ func (c *Client) Request(method, uri string, data io.Reader, contentType string)
 	}
 	// save new cookies
 	c.CookieJar.SetCookies(req.URL, res.Cookies())
-	// return res.Body, nil
 	return res, nil
 }
