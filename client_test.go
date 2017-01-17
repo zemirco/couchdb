@@ -51,7 +51,7 @@ func TestInfo(t *testing.T) {
 		t.Fatal(err)
 	}
 	if info.Couchdb != "Welcome" {
-		t.Error("Couchdb error")
+		t.Errorf("expected Welcome got %s", info.Couchdb)
 	}
 }
 
@@ -62,7 +62,7 @@ func TestActiveTasks(t *testing.T) {
 	}
 	out := make([]Task, 0)
 	if !reflect.DeepEqual(out, res) {
-		t.Error("active tasks should be an empty array")
+		t.Error("expected %v got %v", out, res)
 	}
 }
 
@@ -71,8 +71,11 @@ func TestAll(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res[0] != "_replicator" || res[1] != "_users" {
-		t.Error("slice error")
+	if res[0] != "_replicator" {
+		t.Errorf("expected 1st db to be _replicator but got %s", res[0])
+	}
+	if res[1] != "_users" {
+		t.Errorf("expected 2nd db to be _users but got %s", res[1])
 	}
 }
 
@@ -82,10 +85,10 @@ func TestGet(t *testing.T) {
 		t.Fatal(err)
 	}
 	if info.DbName != "_users" {
-		t.Error("DbName error")
+		t.Errorf("expected name _users got %s", info.DbName)
 	}
 	if info.CompactRunning {
-		t.Error("CompactRunning error")
+		t.Errorf("expected compact running to be false got true")
 	}
 }
 
@@ -95,18 +98,18 @@ func TestCreate(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !status.Ok {
-		t.Error("status error")
+		t.Errorf("expected ok to be true got false")
 	}
 }
 
 func TestCreateFail(t *testing.T) {
 	_, err := client.Create("dummy")
 	if err == nil {
-		t.Fatal("should not create duplicate database")
+		t.Fatal("creating duplicate database should return an error")
 	}
 	if couchdbError, ok := err.(*Error); ok {
 		if couchdbError.StatusCode != http.StatusPreconditionFailed {
-			t.Fatal("should not create duplicate database")
+			t.Fatal("creating duplicate database should return an error")
 		}
 	}
 }
@@ -117,8 +120,11 @@ func TestCreateUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.Ok || res.ID != "org.couchdb.user:john" {
-		t.Error("create user error")
+	if !res.Ok {
+		t.Errorf("expected ok to be true got false")
+	}
+	if res.ID != "org.couchdb.user:john" {
+		t.Errorf("expected res id org.couchdb.user:john but got %s", res.ID)
 	}
 }
 
@@ -127,8 +133,11 @@ func TestCreateSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.Ok || res.Name != "john" {
-		t.Error("create session error")
+	if !res.Ok {
+		t.Errorf("expected ok to be true got false")
+	}
+	if res.Name != "john" {
+		t.Errorf("expected res name john but got %s", res.Name)
 	}
 }
 
@@ -137,8 +146,11 @@ func TestGetSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !session.Ok || session.UserContext.Name != "john" {
-		t.Error("get session error")
+	if !session.Ok {
+		t.Errorf("expected ok to be true got false")
+	}
+	if session.UserContext.Name != "john" {
+		t.Errorf("expected user context name john but got %s", session.UserContext.Name)
 	}
 }
 
@@ -148,7 +160,7 @@ func TestDeleteSession(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !res.Ok {
-		t.Error("delete session error")
+		t.Errorf("expected ok to be true got false")
 	}
 }
 
@@ -157,8 +169,14 @@ func TestGetUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if user.Name != "john" || user.Type != "user" || user.Iterations != 10 {
-		t.Error("get user error")
+	if user.Name != "john" {
+		t.Error("expected name john but got %s", user.Name)
+	}
+	if user.Type != "user" {
+		t.Error("expected type user but got %s", user.Type)
+	}
+	if user.Iterations != 10 {
+		t.Error("expected 10 iterations but got %d", user.Iterations)
 	}
 }
 
@@ -171,8 +189,11 @@ func TestDeleteUser(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res.Ok || res.ID != "org.couchdb.user:john" {
-		t.Error("delete user error")
+	if !res.Ok {
+		t.Errorf("expected ok to be true got false")
+	}
+	if res.ID != "org.couchdb.user:john" {
+		t.Errorf("expected res id to be org.couchdb.user:john but got %s", res.ID)
 	}
 }
 
