@@ -62,7 +62,7 @@ func TestActiveTasks(t *testing.T) {
 	}
 	out := make([]Task, 0)
 	if !reflect.DeepEqual(out, res) {
-		t.Error("expected %v got %v", out, res)
+		t.Errorf("expected %v got %v", out, res)
 	}
 }
 
@@ -170,13 +170,13 @@ func TestGetUser(t *testing.T) {
 		t.Fatal(err)
 	}
 	if user.Name != "john" {
-		t.Error("expected name john but got %s", user.Name)
+		t.Errorf("expected name john but got %s", user.Name)
 	}
 	if user.Type != "user" {
-		t.Error("expected type user but got %s", user.Type)
+		t.Errorf("expected type user but got %s", user.Type)
 	}
 	if user.Iterations != 10 {
-		t.Error("expected 10 iterations but got %d", user.Iterations)
+		t.Errorf("expected 10 iterations but got %d", user.Iterations)
 	}
 }
 
@@ -203,11 +203,11 @@ func TestGetSessionAdmin(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !session.Ok {
-		t.Error("session response is false")
+		t.Error("expected ok to be true but got false")
 	}
 	roles := []string{"_admin"}
 	if !reflect.DeepEqual(roles, session.UserContext.Roles) {
-		t.Error("session roles are wrong")
+		t.Errorf("expected roles %v but got %v", roles, session.UserContext.Roles)
 	}
 }
 
@@ -217,7 +217,7 @@ func TestDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !status.Ok {
-		t.Error("status error")
+		t.Error("expected ok to be true but got false")
 	}
 }
 
@@ -459,8 +459,7 @@ type DummyDocument struct {
 }
 
 func TestBefore(t *testing.T) {
-	_, err := client.Create("dummy")
-	if err != nil {
+	if _, err := client.Create("dummy"); err != nil {
 		panic(err)
 	}
 }
@@ -474,14 +473,14 @@ func TestDocumentPost(t *testing.T) {
 		Beep: "bopp",
 	}
 	if doc.Rev != "" {
-		t.Error("new document should not have a revision")
+		t.Errorf("expected new document to have empty revision but got %s", doc.Rev)
 	}
 	res, err := db.Post(doc)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !res.Ok {
-		t.Error("post document error")
+		t.Error("expected ok to be true but got false instead")
 	}
 }
 
@@ -491,7 +490,7 @@ func TestDocumentHead(t *testing.T) {
 		t.Fatal(err)
 	}
 	if head.StatusCode != 200 {
-		t.Error("document head error")
+		t.Errorf("expected status code to be 200 but got %d", head.StatusCode)
 	}
 }
 
@@ -501,8 +500,11 @@ func TestDocumentGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if doc.Foo != "bar" || doc.Beep != "bopp" {
-		t.Error("document fields error")
+	if doc.Foo != "bar" {
+		t.Errorf("expected foo to be bar but got %s", doc.Foo)
+	}
+	if doc.Beep != "bopp" {
+		t.Errorf("expected beep to be bopp but got %s", doc.Beep)
 	}
 }
 
@@ -519,8 +521,11 @@ func TestDocumentPut(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != "testid" || !res.Ok {
-		t.Error("put document response error")
+	if !res.Ok {
+		t.Error("expected ok to be true but got false")
+	}
+	if res.ID != "testid" {
+		t.Errorf("expected id testid but got %s", res.ID)
 	}
 }
 
@@ -536,8 +541,11 @@ func TestDocumentDelete(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != "testid" || !res.Ok {
-		t.Error("delete document response error")
+	if !res.Ok {
+		t.Error("expected ok to be true but got false")
+	}
+	if res.ID != "testid" {
+		t.Errorf("expected id testid but got %s", res.ID)
 	}
 }
 
@@ -553,8 +561,11 @@ func TestDocumentPutAttachment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != "testid" || !res.Ok {
-		t.Error("put attachment error")
+	if !res.Ok {
+		t.Error("expected ok to be true but got false")
+	}
+	if res.ID != "testid" {
+		t.Errorf("expected id testid but got %s", res.ID)
 	}
 }
 
@@ -573,8 +584,11 @@ func TestUpdateDocumentWithAttachment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.ID != "testid" || !res.Ok {
-		t.Error("put document response error")
+	if !res.Ok {
+		t.Error("expected ok to be true but got false")
+	}
+	if res.ID != "testid" {
+		t.Errorf("expected id testid but got %s", res.ID)
 	}
 }
 
@@ -596,8 +610,11 @@ func TestDocumentBulkDocs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !res[0].Ok || !res[1].Ok {
-		t.Error("bulk docs error")
+	if !res[0].Ok {
+		t.Errorf("expected first ok to be true but got false")
+	}
+	if !res[1].Ok {
+		t.Errorf("expected second ok to be true but got false")
 	}
 }
 
@@ -607,10 +624,10 @@ func TestAllDocs(t *testing.T) {
 		t.Fatal(err)
 	}
 	if res.TotalRows != 3 {
-		t.Errorf("expected total rows equals 3 but got %v", res.TotalRows)
+		t.Errorf("expected total rows equals 3 but got %d", res.TotalRows)
 	}
 	if len(res.Rows) != 3 {
-		t.Errorf("expected length rows equals 3 but got %v", len(res.Rows))
+		t.Errorf("expected length rows equals 3 but got %d", len(res.Rows))
 	}
 }
 
@@ -858,8 +875,11 @@ func TestViewGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.TotalRows != 2 || res.Offset != 0 {
-		t.Error("view get error")
+	if res.TotalRows != 2 {
+		t.Errorf("expected total rows to be 2 but got %d", res.TotalRows)
+	}
+	if res.Offset != 0 {
+		t.Errorf("expected offset to be 0 but got %d", res.Offset)
 	}
 }
 
@@ -870,7 +890,7 @@ func TestDesignDocumentName(t *testing.T) {
 		t.Fatal(err)
 	}
 	if doc.Name() != "test" {
-		t.Error("design document Name() error")
+		t.Errorf("expected name to be test but got %s", doc.Name())
 	}
 }
 
@@ -880,9 +900,8 @@ func TestDesignDocumentView(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, ok := doc.Views["foo"]
-	if !ok {
-		t.Error("design document view error")
+	if _, ok := doc.Views["foo"]; !ok {
+		t.Error("expected foo mapping function to exists but it does not")
 	}
 }
 
@@ -896,7 +915,7 @@ func TestViewGetWithQueryParameters(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(res.Rows) != 1 {
-		t.Error("view get error")
+		t.Errorf("expected only one row but got %d", len(res.Rows))
 	}
 }
 
@@ -911,7 +930,7 @@ func TestViewGetWithStartKeyEndKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(res.Rows) != 1 {
-		t.Error("view get error")
+		t.Errorf("expected only one row but got %d", len(res.Rows))
 	}
 }
 
@@ -926,7 +945,7 @@ func TestViewGetWithInteger(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(res.Rows) != 1 {
-		t.Error("view get error")
+		t.Errorf("expected only one row but got %d", len(res.Rows))
 	}
 }
 
