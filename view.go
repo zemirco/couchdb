@@ -23,12 +23,12 @@ func (v *View) Get(name string, params QueryParameters) (*ViewResponse, error) {
 		return nil, err
 	}
 	uri := fmt.Sprintf("%s_view/%s?%s", v.URL, name, q.Encode())
-	body, err := v.Database.Client.Request(http.MethodGet, uri, nil, "")
+	res, err := v.Database.Client.Request(http.MethodGet, uri, nil, "")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	return newViewResponse(body)
+	defer res.Body.Close()
+	return newViewResponse(res.Body)
 }
 
 // Post executes specified view function from specified design document.
@@ -41,8 +41,8 @@ func (v *View) Post(name string, keys []string, params QueryParameters) (*ViewRe
 		Keys: keys,
 	}
 	// create POST body
-	res, err := json.Marshal(content)
-	if err != nil {
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(content); err != nil {
 		return nil, err
 	}
 	// create query string
@@ -51,13 +51,12 @@ func (v *View) Post(name string, keys []string, params QueryParameters) (*ViewRe
 		return nil, err
 	}
 	url := fmt.Sprintf("%s_view/%s?%s", v.URL, name, q.Encode())
-	data := bytes.NewReader(res)
-	body, err := v.Database.Client.Request(http.MethodPost, url, data, "application/json")
+	res, err := v.Database.Client.Request(http.MethodPost, url, &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	return newViewResponse(body)
+	defer res.Body.Close()
+	return newViewResponse(res.Body)
 }
 
 func newViewResponse(body io.Reader) (*ViewResponse, error) {

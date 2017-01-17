@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
 	"time"
 )
 
@@ -14,123 +15,123 @@ import (
 type Client struct {
 	Username  string
 	Password  string
-	URL       string
+	BaseURL   *url.URL
 	CookieJar *cookiejar.Jar
 }
 
 // NewClient returns new couchdb client for given url
-func NewClient(url string) (*Client, error) {
+func NewClient(u *url.URL) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{"", "", url, jar}, nil
+	return &Client{"", "", u, jar}, nil
 }
 
 // NewAuthClient returns new couchdb client with basic authentication
-func NewAuthClient(username, password, url string) (*Client, error) {
+func NewAuthClient(username, password string, u *url.URL) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{username, password, url, jar}, nil
+	return &Client{username, password, u, jar}, nil
 }
 
 // Info returns some information about the server
 func (c *Client) Info() (*Server, error) {
-	body, err := c.Request(http.MethodGet, c.URL, nil, "application/json")
+	u := ""
+	res, err := c.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer res.Body.Close()
 	server := &Server{}
-	return server, json.NewDecoder(body).Decode(&server)
+	return server, json.NewDecoder(res.Body).Decode(&server)
 }
 
 // ActiveTasks returns list of currently running tasks
 func (c *Client) ActiveTasks() ([]Task, error) {
-	url := fmt.Sprintf("%s_active_tasks", c.URL)
-	body, err := c.Request(http.MethodGet, url, nil, "application/json")
+	u := "_active_tasks"
+	res, err := c.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer res.Body.Close()
 	tasks := []Task{}
-	return tasks, json.NewDecoder(body).Decode(&tasks)
+	return tasks, json.NewDecoder(res.Body).Decode(&tasks)
 }
 
 // All returns list of all databases on server
 func (c *Client) All() ([]string, error) {
-	url := fmt.Sprintf("%s_all_dbs", c.URL)
-	body, err := c.Request(http.MethodGet, url, nil, "application/json")
+	u := "_all_dbs"
+	res, err := c.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer res.Body.Close()
 	data := []string{}
-	return data, json.NewDecoder(body).Decode(&data)
+	return data, json.NewDecoder(res.Body).Decode(&data)
 }
 
 // Get database.
 func (c *Client) Get(name string) (*DatabaseInfo, error) {
-	url := fmt.Sprintf("%s%s", c.URL, name)
-	body, err := c.Request(http.MethodGet, url, nil, "application/json")
+	u := name
+	res, err := c.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer res.Body.Close()
 	dbInfo := &DatabaseInfo{}
-	return dbInfo, json.NewDecoder(body).Decode(&dbInfo)
+	return dbInfo, json.NewDecoder(res.Body).Decode(&dbInfo)
 }
 
 // Create database.
 func (c *Client) Create(name string) (*DatabaseResponse, error) {
-	url := fmt.Sprintf("%s%s", c.URL, name)
-	body, err := c.Request(http.MethodPut, url, nil, "application/json")
+	u := name
+	res, err := c.Request(http.MethodPut, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	return newDatabaseResponse(body)
+	defer res.Body.Close()
+	return newDatabaseResponse(res.Body)
 }
 
 // Delete database.
 func (c *Client) Delete(name string) (*DatabaseResponse, error) {
-	url := fmt.Sprintf("%s%s", c.URL, name)
-	body, err := c.Request(http.MethodDelete, url, nil, "application/json")
+	u := name
+	res, err := c.Request(http.MethodDelete, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	return newDatabaseResponse(body)
+	defer res.Body.Close()
+	return newDatabaseResponse(res.Body)
 }
 
 // CreateUser creates a new user in _users database
 func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
-	url := fmt.Sprintf("%s_users/%s", c.URL, user.ID)
-	res, err := json.Marshal(user)
+	u := fmt.Sprintf("_users/%s", user.ID)
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(user); err != nil {
+		return nil, err
+	}
+	res, err := c.Request(http.MethodPut, u, &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	data := bytes.NewReader(res)
-	body, err := c.Request(http.MethodPut, url, data, "application/json")
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-	return newDocumentResponse(body)
+	defer res.Body.Close()
+	return newDocumentResponse(res.Body)
 }
 
 // GetUser returns user by given name
 func (c *Client) GetUser(name string) (*User, error) {
-	url := fmt.Sprintf("%s_users/org.couchdb.user:%s", c.URL, name)
-	body, err := c.Request(http.MethodGet, url, nil, "application/json")
+	u := fmt.Sprintf("_users/org.couchdb.user:%s", name)
+	res, err := c.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer res.Body.Close()
 	user := &User{}
-	return user, json.NewDecoder(body).Decode(&user)
+	return user, json.NewDecoder(res.Body).Decode(&user)
 }
 
 // DeleteUser removes user from database
@@ -141,50 +142,49 @@ func (c *Client) DeleteUser(user *User) (*DocumentResponse, error) {
 
 // CreateSession creates a new session and logs in user
 func (c *Client) CreateSession(name, password string) (*PostSessionResponse, error) {
-	url := fmt.Sprintf("%s_session", c.URL)
+	u := "_session"
 	creds := Credentials{name, password}
-	res, err := json.Marshal(creds)
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(creds); err != nil {
+		return nil, err
+	}
+	res, err := c.Request(http.MethodPost, u, &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	data := bytes.NewReader(res)
-	body, err := c.Request(http.MethodPost, url, data, "application/json")
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
+	defer res.Body.Close()
 	sessionResponse := &PostSessionResponse{}
-	return sessionResponse, json.NewDecoder(body).Decode(&sessionResponse)
+	return sessionResponse, json.NewDecoder(res.Body).Decode(&sessionResponse)
 }
 
 // GetSession returns session for currently logged in user
 func (c *Client) GetSession() (*GetSessionResponse, error) {
-	url := fmt.Sprintf("%s_session", c.URL)
-	body, err := c.Request(http.MethodGet, url, nil, "")
+	u := "_session"
+	res, err := c.Request(http.MethodGet, u, nil, "")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer res.Body.Close()
 	sessionResponse := &GetSessionResponse{}
-	return sessionResponse, json.NewDecoder(body).Decode(&sessionResponse)
+	return sessionResponse, json.NewDecoder(res.Body).Decode(&sessionResponse)
 }
 
 // DeleteSession removes current session and logs out user
 func (c *Client) DeleteSession() (*DatabaseResponse, error) {
-	url := fmt.Sprintf("%s_session", c.URL)
-	body, err := c.Request(http.MethodDelete, url, nil, "")
+	u := "_session"
+	res, err := c.Request(http.MethodDelete, u, nil, "")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer res.Body.Close()
 	databaseResponse := &DatabaseResponse{}
-	return databaseResponse, json.NewDecoder(body).Decode(&databaseResponse)
+	return databaseResponse, json.NewDecoder(res.Body).Decode(&databaseResponse)
 }
 
 // Use database.
 func (c *Client) Use(name string) Database {
 	return Database{
-		URL:    c.URL + name + "/",
+		Name:   name + "/",
 		Client: c,
 	}
 }
@@ -292,23 +292,27 @@ type Replication struct {
 //
 // http://docs.couchdb.org/en/1.6.1/api/server/common.html#replicate
 func (c *Client) Replicate(req ReplicationRequest) (*ReplicationResponse, error) {
-	res, err := json.Marshal(req)
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(req); err != nil {
+		return nil, err
+	}
+	res, err := c.Request(http.MethodPost, "_replicate", &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	data := bytes.NewReader(res)
-	body, err := c.Request(http.MethodPost, c.URL+"_replicate", data, "application/json")
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
+	defer res.Body.Close()
 	r := &ReplicationResponse{}
-	return r, json.NewDecoder(body).Decode(&r)
+	return r, json.NewDecoder(res.Body).Decode(&r)
 }
 
 // Request creates new http request and does it.
-func (c *Client) Request(method, url string, data io.Reader, contentType string) (io.ReadCloser, error) {
-	req, err := http.NewRequest(method, url, data)
+func (c *Client) Request(method, uri string, data io.Reader, contentType string) (*http.Response, error) {
+	rel, err := url.Parse(uri)
+	if err != nil {
+		return nil, err
+	}
+	u := c.BaseURL.ResolveReference(rel)
+	req, err := http.NewRequest(method, u.String(), data)
 	if err != nil {
 		return nil, err
 	}
@@ -331,5 +335,6 @@ func (c *Client) Request(method, url string, data io.Reader, contentType string)
 	}
 	// save new cookies
 	c.CookieJar.SetCookies(req.URL, res.Cookies())
-	return res.Body, nil
+	// return res.Body, nil
+	return res, nil
 }

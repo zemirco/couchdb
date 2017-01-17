@@ -14,7 +14,7 @@ import (
 // Database performs actions on certain database
 type Database struct {
 	*Client
-	URL string
+	Name string
 }
 
 // AllDocs returns all documents in selected database.
@@ -24,78 +24,81 @@ func (db *Database) AllDocs(params *QueryParameters) (*ViewResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("%s_all_docs?%s", db.URL, q.Encode())
-	body, err := db.Client.Request(http.MethodGet, url, nil, "")
+	u := fmt.Sprintf("%s_all_docs?%s", db.Name, q.Encode())
+	res, err := db.Client.Request(http.MethodGet, u, nil, "")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	return newViewResponse(body)
+	defer res.Body.Close()
+	return newViewResponse(res.Body)
 }
 
 // Head request.
 func (db *Database) Head(id string) (*http.Response, error) {
-	return http.Head(db.URL + id)
+	u := fmt.Sprintf("%s%s", db.Name, id)
+	body, err := db.Client.Request(http.MethodHead, u, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 }
 
 // Get document.
 func (db *Database) Get(doc CouchDoc, id string) error {
-	url := fmt.Sprintf("%s%s", db.URL, id)
-	body, err := db.Client.Request(http.MethodGet, url, nil, "application/json")
+	u := fmt.Sprintf("%s%s", db.Name, id)
+	res, err := db.Client.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return err
 	}
-	defer body.Close()
-	return json.NewDecoder(body).Decode(doc)
+	defer res.Body.Close()
+	return json.NewDecoder(res.Body).Decode(doc)
 }
 
 // Put document.
 func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
-	url := fmt.Sprintf("%s%s", db.URL, doc.GetID())
-	res, err := json.Marshal(doc)
+	u := fmt.Sprintf("%s%s", db.Name, doc.GetID())
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(doc); err != nil {
+		return nil, err
+	}
+	res, err := db.Client.Request(http.MethodPut, u, &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	data := bytes.NewReader(res)
-	body, err := db.Client.Request(http.MethodPut, url, data, "application/json")
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-	return newDocumentResponse(body)
+	defer res.Body.Close()
+	return newDocumentResponse(res.Body)
 }
 
 // Post document.
 func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
-	res, err := json.Marshal(doc)
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(doc); err != nil {
+		return nil, err
+	}
+	res, err := db.Client.Request(http.MethodPost, db.Name, &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	data := bytes.NewReader(res)
-	body, err := db.Client.Request(http.MethodPost, db.URL, data, "application/json")
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-	return newDocumentResponse(body)
+	defer res.Body.Close()
+	return newDocumentResponse(res.Body)
 }
 
 // Delete document.
 func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
-	url := fmt.Sprintf("%s%s?rev=%s", db.URL, doc.GetID(), doc.GetRev())
-	body, err := db.Client.Request(http.MethodDelete, url, nil, "application/json")
+	u := fmt.Sprintf("%s%s?rev=%s", db.Name, doc.GetID(), doc.GetRev())
+	res, err := db.Client.Request(http.MethodDelete, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	return newDocumentResponse(body)
+	defer res.Body.Close()
+	return newDocumentResponse(res.Body)
 }
 
 // PutAttachment adds attachment to document
 func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse, error) {
 
 	// target url
-	url := fmt.Sprintf("%s%s", db.URL, doc.GetID())
+	u := fmt.Sprintf("%s%s", db.Name, doc.GetID())
 
 	// get file from disk
 	file, err := os.Open(path)
@@ -132,12 +135,12 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 
 	// create http request
 	contentType := fmt.Sprintf("multipart/related; boundary=%q", writer.Boundary())
-	body, err := db.Client.Request(http.MethodPut, url, &buffer, contentType)
+	res, err := db.Client.Request(http.MethodPut, u, &buffer, contentType)
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
-	return newDocumentResponse(body)
+	defer res.Body.Close()
+	return newDocumentResponse(res.Body)
 }
 
 // Bulk allows to create and update multiple documents
@@ -148,27 +151,26 @@ func (db *Database) Bulk(docs []CouchDoc) ([]DocumentResponse, error) {
 	bulk := BulkDoc{
 		Docs: docs,
 	}
-	res, err := json.Marshal(bulk)
+	u := fmt.Sprintf("%s_bulk_docs", db.Name)
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(bulk); err != nil {
+		return nil, err
+	}
+	res, err := db.Client.Request(http.MethodPost, u, &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	url := fmt.Sprintf("%s_bulk_docs", db.URL)
-	data := bytes.NewReader(res)
-	body, err := db.Client.Request(http.MethodPost, url, data, "application/json")
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
+	defer res.Body.Close()
 	response := []DocumentResponse{}
-	return response, json.NewDecoder(body).Decode(&response)
+	return response, json.NewDecoder(res.Body).Decode(&response)
 
 }
 
 // View returns view for given name.
 func (db *Database) View(name string) View {
-	url := fmt.Sprintf("%s_design/%s/", db.URL, name)
+	u := fmt.Sprintf("%s_design/%s/", db.Name, name)
 	return View{
-		URL:      url,
+		URL:      u,
 		Database: db,
 	}
 }
@@ -183,18 +185,17 @@ type PurgeResponse struct {
 //
 // http://docs.couchdb.org/en/1.6.1/api/database/misc.html
 func (db *Database) Purge(req map[string][]string) (*PurgeResponse, error) {
-	res, err := json.Marshal(req)
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(req); err != nil {
+		return nil, err
+	}
+	res, err := db.Client.Request(http.MethodPost, db.Name+"_purge", &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	data := bytes.NewReader(res)
-	body, err := db.Client.Request(http.MethodPost, db.URL+"_purge", data, "application/json")
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
+	defer res.Body.Close()
 	response := &PurgeResponse{}
-	return response, json.NewDecoder(body).Decode(&response)
+	return response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // Element is single element inside Admins/Members in security document.
@@ -212,30 +213,29 @@ type SecurityDocument struct {
 // GetSecurity returns security document.
 // http://docs.couchdb.org/en/latest/api/database/security.html
 func (db *Database) GetSecurity() (*SecurityDocument, error) {
-	url := fmt.Sprintf("%s_security", db.URL)
-	body, err := db.Client.Request(http.MethodGet, url, nil, "application/json")
+	u := fmt.Sprintf("%s_security", db.Name)
+	res, err := db.Client.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	defer body.Close()
+	defer res.Body.Close()
 	var secDoc SecurityDocument
-	return &secDoc, json.NewDecoder(body).Decode(&secDoc)
+	return &secDoc, json.NewDecoder(res.Body).Decode(&secDoc)
 }
 
 // PutSecurity sets the security object for the given database.
 // http://docs.couchdb.org/en/latest/api/database/security.html#put--db-_security
 func (db *Database) PutSecurity(secDoc SecurityDocument) (*DatabaseResponse, error) {
-	url := fmt.Sprintf("%s_security", db.URL)
-	b, err := json.Marshal(secDoc)
+	u := fmt.Sprintf("%s_security", db.Name)
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(secDoc); err != nil {
+		return nil, err
+	}
+	res, err := db.Client.Request(http.MethodPut, u, &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
-	data := bytes.NewReader(b)
-	body, err := db.Client.Request(http.MethodPut, url, data, "application/json")
-	if err != nil {
-		return nil, err
-	}
-	defer body.Close()
-	res := new(DatabaseResponse)
-	return res, json.NewDecoder(body).Decode(res)
+	defer res.Body.Close()
+	r := new(DatabaseResponse)
+	return r, json.NewDecoder(res.Body).Decode(r)
 }
