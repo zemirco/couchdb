@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/zemirco/couchdb"
 )
@@ -13,28 +14,30 @@ type DummyDocument struct {
 	Beep string `json:"beep"`
 }
 
-// just some helper function
-func check(err error) {
+// start
+func main() {
+	u, err := url.Parse("http://127.0.0.1:5984/")
 	if err != nil {
 		panic(err)
 	}
-}
-
-// start
-func main() {
 
 	// create a new client
-	client, err := couchdb.NewClient("http://127.0.0.1:5984/")
-	check(err)
+	client, err := couchdb.NewClient(u)
+	if err != nil {
+		panic(err)
+	}
 
 	// get some information about your CouchDB
 	info, err := client.Info()
-	check(err)
+	if err != nil {
+		panic(err)
+	}
 	fmt.Println(info)
 
 	// create a database
-	_, err = client.Create("dummy")
-	check(err)
+	if _, err = client.Create("dummy"); err != nil {
+		panic(err)
+	}
 
 	// use your new "dummy" database and create a document
 	db := client.Use("dummy")
@@ -43,18 +46,23 @@ func main() {
 		Beep: "bopp",
 	}
 	result, err := db.Post(doc)
-	check(err)
+	if err != nil {
+		panic(err)
+	}
 
 	// get id and current revision.
-	err = db.Get(doc, result.ID)
-	check(err)
+	if err := db.Get(doc, result.ID); err != nil {
+		panic(err)
+	}
 
 	// delete document
-	_, err = db.Delete(doc)
-	check(err)
+	if _, err = db.Delete(doc); err != nil {
+		panic(err)
+	}
 
 	// and finally delete the database
-	_, err = client.Delete("dummy")
-	check(err)
+	if _, err = client.Delete("dummy"); err != nil {
+		panic(err)
+	}
 
 }
