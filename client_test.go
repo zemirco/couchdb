@@ -1,6 +1,8 @@
 package couchdb
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -228,11 +230,9 @@ func TestReplication(t *testing.T) {
 	name := "replication"
 	name2 := "replication2"
 	// create database
-	res, err := client.Create(name)
-	if err != nil {
+	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
-	t.Logf("%#v", res)
 	// add some documents to database
 	db := client.Use(name)
 	for _, a := range []string{"dog", "mouse", "cat"} {
@@ -254,7 +254,6 @@ func TestReplication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("%#v", r)
 	if !r.Ok {
 		t.Error("expected ok to be true but got false instead")
 	}
@@ -366,16 +365,13 @@ func TestReplicationContinuous(t *testing.T) {
 		Source:       "http://localhost:5984/" + dbName,
 		Target:       "http://localhost:5984/" + dbName2,
 	}
-	res, err := c.Replicate(req)
-	if err != nil {
+	if _, err := c.Replicate(req); err != nil {
 		t.Error(err)
 	}
-	t.Logf("%#v", res)
 	tasks, err := c.ActiveTasks()
 	if err != nil {
 		t.Error(err)
 	}
-	t.Logf("%#v", tasks)
 	if tasks[0].Type != "replication" {
 		t.Errorf("expected type replication but got %s instead", tasks[0].Type)
 	}
@@ -384,6 +380,53 @@ func TestReplicationContinuous(t *testing.T) {
 		if _, err := client.Delete(d); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestRequest(t *testing.T) {
+	name := "test_request"
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Fatal(err)
+	}
+	// add some documents to database
+	db := client.Use(name)
+	animals := []string{"dog", "mouse", "cat"}
+	docs := make([]CouchDoc, len(animals))
+	for i, a := range animals {
+		doc := &animal{
+			Type:   "animal",
+			Animal: a,
+		}
+		docs[i] = doc
+	}
+	if _, err := db.Bulk(docs); err != nil {
+		t.Fatal(err)
+	}
+	// get all documents
+	includeDocs := true
+	q := QueryParameters{
+		IncludeDocs: &includeDocs,
+	}
+	data, err := db.AllDocs(&q)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// change single document
+	doc := data.Rows[0].Doc
+	// make post request to database
+	doc["owner"] = "zemirco"
+	var b bytes.Buffer
+	if err := json.NewEncoder(&b).Encode(doc); err != nil {
+		t.Fatal(err)
+	}
+	u := fmt.Sprintf("%s/%s", name, doc["_id"])
+	if _, err := client.Request(http.MethodPut, u, &b, "application/json"); err != nil {
+		t.Fatal(err)
+	}
+	// remove database
+	if _, err := client.Delete(name); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -566,7 +609,6 @@ func TestPurge(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Logf("%#v", postResponse)
 	// purge
 	req := map[string][]string{
 		postResponse.ID: {
@@ -577,7 +619,6 @@ func TestPurge(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	t.Logf("%#v", purgeResponse)
 	if purgeResponse.PurgeSeq != 1 {
 		t.Errorf("expected purge seq to be 1 but got %v instead", purgeResponse.PurgeSeq)
 	}
@@ -645,9 +686,7 @@ func TestSecurity(t *testing.T) {
 }
 
 func TestAfter(t *testing.T) {
-	t.Log("deleting dummy database")
-	_, err := client.Delete("dummy")
-	if err != nil {
+	if _, err := client.Delete("dummy"); err != nil {
 		t.Fatal(err)
 	}
 }
