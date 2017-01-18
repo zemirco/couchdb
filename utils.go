@@ -1,6 +1,7 @@
 package couchdb
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -10,6 +11,8 @@ import (
 	"net/textproto"
 	"os"
 	"path/filepath"
+
+	"github.com/zemirco/uid"
 )
 
 // Get mime type from file name.
@@ -101,4 +104,23 @@ func writeMultipart(writer *multipart.Writer, file io.Reader) error {
 	}
 
 	return nil
+}
+
+// RandDBName returns random CouchDB database name.
+// See the docs for database name rules.
+// http://docs.couchdb.org/en/2.0.0/api/database/common.html#put--db
+func RandDBName(length int) (string, error) {
+	// fastest string concatenation
+	var buffer bytes.Buffer
+	// generate first character, must be a letter
+	first := uid.NewBytes(1, "abcdefghijklmnopqrstuvwxyz")
+	if _, err := buffer.WriteString(first); err != nil {
+		return "", err
+	}
+	// generate last characters
+	last := uid.NewBytes(length-1, "abcdefghijklmnopqrstuvwxyz0123456789")
+	if _, err := buffer.WriteString(last); err != nil {
+		return "", err
+	}
+	return buffer.String(), nil
 }

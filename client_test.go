@@ -13,13 +13,7 @@ import (
 	"github.com/segmentio/pointer"
 )
 
-var (
-	client *Client
-	c      *Client
-	cView  *Client
-	db     Database
-	dbView Database
-)
+var client *Client
 
 func TestMain(m *testing.M) {
 	u, err := url.Parse("http://127.0.0.1:5984/")
@@ -30,16 +24,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic(err)
 	}
-	c, err = NewClient(u)
-	if err != nil {
-		panic(err)
-	}
-	db = c.Use("dummy")
-	cView, err = NewClient(u)
-	if err != nil {
-		panic(err)
-	}
-	dbView = cView.Use("gotest")
 	code := m.Run()
 	// clean up
 	os.Exit(code)
@@ -93,18 +77,37 @@ func TestGet(t *testing.T) {
 }
 
 func TestCreate(t *testing.T) {
-	status, err := client.Create("dummy")
+	name, err := RandDBName(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	status, err := client.Create(name)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !status.Ok {
 		t.Errorf("expected ok to be true got false")
 	}
+	if _, err := client.Delete(name); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestCreateFail(t *testing.T) {
-	_, err := client.Create("dummy")
-	if err == nil {
+	name, err := RandDBName(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// create db first time
+	status, err := client.Create(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !status.Ok {
+		t.Errorf("expected ok to be true got false")
+	}
+	// try to create db again
+	if _, err := client.Create(name); err == nil {
 		t.Fatal("creating duplicate database should return an error")
 	}
 	if couchdbError, ok := err.(*Error); ok {
@@ -112,10 +115,17 @@ func TestCreateFail(t *testing.T) {
 			t.Fatal("creating duplicate database should return an error")
 		}
 	}
+	if _, err := client.Delete(name); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestCreateUser(t *testing.T) {
-	user := NewUser("john", "password", []string{})
+	name, err := RandDBName(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	user := NewUser(name, "password", []string{})
 	res, err := client.CreateUser(user)
 	if err != nil {
 		t.Fatal(err)
@@ -123,25 +133,64 @@ func TestCreateUser(t *testing.T) {
 	if !res.Ok {
 		t.Errorf("expected ok to be true got false")
 	}
-	if res.ID != "org.couchdb.user:john" {
-		t.Errorf("expected res id org.couchdb.user:john but got %s", res.ID)
+	if res.ID != "org.couchdb.user:"+name {
+		t.Errorf("expected res id org.couchdb.user:%s but got %s", name, res.ID)
+	}
+	u, err := client.GetUser(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.DeleteUser(u); err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestCreateSession(t *testing.T) {
-	res, err := client.CreateSession("john", "password")
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create user first
+	user := NewUser(name, "password", []string{})
+	if _, err := client.CreateUser(user); err != nil {
+		t.Fatal(err)
+	}
+	// now create session
+	res, err := client.CreateSession(name, "password")
 	if err != nil {
 		t.Fatal(err)
 	}
 	if !res.Ok {
 		t.Errorf("expected ok to be true got false")
 	}
-	if res.Name != "john" {
-		t.Errorf("expected res name john but got %s", res.Name)
+	if res.Name != name {
+		t.Errorf("expected res name %s but got %s", name, res.Name)
+	}
+	// remove user after test
+	u, err := client.GetUser(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.DeleteUser(u); err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestGetSession(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create user first
+	user := NewUser(name, "password", []string{})
+	if _, err := client.CreateUser(user); err != nil {
+		t.Fatal(err)
+	}
+	// now create session
+	if _, err := client.CreateSession(name, "password"); err != nil {
+		t.Fatal(err)
+	}
+	// get session
 	session, err := client.GetSession()
 	if err != nil {
 		t.Fatal(err)
@@ -149,12 +198,34 @@ func TestGetSession(t *testing.T) {
 	if !session.Ok {
 		t.Errorf("expected ok to be true got false")
 	}
-	if session.UserContext.Name != "john" {
-		t.Errorf("expected user context name john but got %s", session.UserContext.Name)
+	if session.UserContext.Name != name {
+		t.Errorf("expected user context name %s but got %s", name, session.UserContext.Name)
+	}
+	// remove user after test
+	u, err := client.GetUser(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.DeleteUser(u); err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestDeleteSession(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create user first
+	user := NewUser(name, "password", []string{})
+	if _, err := client.CreateUser(user); err != nil {
+		t.Fatal(err)
+	}
+	// create session
+	if _, err := client.CreateSession(name, "password"); err != nil {
+		t.Fatal(err)
+	}
+	// now delete session
 	res, err := client.DeleteSession()
 	if err != nil {
 		t.Fatal(err)
@@ -162,26 +233,57 @@ func TestDeleteSession(t *testing.T) {
 	if !res.Ok {
 		t.Errorf("expected ok to be true got false")
 	}
-}
-
-func TestGetUser(t *testing.T) {
-	user, err := client.GetUser("john")
+	// remove user after test
+	u, err := client.GetUser(name)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if user.Name != "john" {
-		t.Errorf("expected name john but got %s", user.Name)
+	if _, err := client.DeleteUser(u); err != nil {
+		t.Fatal(err)
 	}
-	if user.Type != "user" {
+}
+
+func TestGetUser(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create user first
+	user := NewUser(name, "password", []string{})
+	if _, err := client.CreateUser(user); err != nil {
+		t.Fatal(err)
+	}
+	// get user
+	u, err := client.GetUser(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if u.Name != name {
+		t.Errorf("expected name %s but got %s", name, user.Name)
+	}
+	if u.Type != "user" {
 		t.Errorf("expected type user but got %s", user.Type)
 	}
-	if user.Iterations != 10 {
+	if u.Iterations != 10 {
 		t.Errorf("expected 10 iterations but got %d", user.Iterations)
+	}
+	// delete user after test
+	if _, err := client.DeleteUser(u); err != nil {
+		t.Fatal(err)
 	}
 }
 
 func TestDeleteUser(t *testing.T) {
-	user, err := client.GetUser("john")
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create user first
+	u := NewUser(name, "password", []string{})
+	if _, err := client.CreateUser(u); err != nil {
+		t.Fatal(err)
+	}
+	user, err := client.GetUser(name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -192,8 +294,8 @@ func TestDeleteUser(t *testing.T) {
 	if !res.Ok {
 		t.Errorf("expected ok to be true got false")
 	}
-	if res.ID != "org.couchdb.user:john" {
-		t.Errorf("expected res id to be org.couchdb.user:john but got %s", res.ID)
+	if res.ID != "org.couchdb.user:"+name {
+		t.Errorf("expected res id to be org.couchdb.user:%s but got %s", name, res.ID)
 	}
 }
 
@@ -212,7 +314,16 @@ func TestGetSessionAdmin(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	status, err := client.Delete("dummy")
+	name, err := RandDBName(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// create db first time
+	if _, err := client.Create(name); err != nil {
+		t.Fatal(err)
+	}
+	// delete database
+	status, err := client.Delete(name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -222,8 +333,20 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteFail(t *testing.T) {
-	_, err := client.Delete("dummy")
-	if err == nil {
+	name, err := RandDBName(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// create db first
+	if _, err := client.Create(name); err != nil {
+		t.Fatal(err)
+	}
+	// delete db first time
+	if _, err := client.Delete(name); err != nil {
+		t.Fatal(err)
+	}
+	// delete db second time
+	if _, err := client.Delete("dummy"); err == nil {
 		t.Fatal("should not delete non existing database")
 	}
 	if couchdbError, ok := err.(*Error); ok {
@@ -271,7 +394,7 @@ func TestReplication(t *testing.T) {
 		Source:       "http://localhost:5984/" + name,
 		Target:       "http://localhost:5984/" + name2,
 	}
-	r, err := c.Replicate(req)
+	r, err := client.Replicate(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -347,7 +470,7 @@ func TestReplicationFilter(t *testing.T) {
 			"owner": "john",
 		},
 	}
-	if _, err := c.Replicate(req); err != nil {
+	if _, err := client.Replicate(req); err != nil {
 		t.Error(err)
 	}
 	// check replicated database
@@ -386,10 +509,10 @@ func TestReplicationContinuous(t *testing.T) {
 		Source:       "http://localhost:5984/" + dbName,
 		Target:       "http://localhost:5984/" + dbName2,
 	}
-	if _, err := c.Replicate(req); err != nil {
+	if _, err := client.Replicate(req); err != nil {
 		t.Error(err)
 	}
-	tasks, err := c.ActiveTasks()
+	tasks, err := client.ActiveTasks()
 	if err != nil {
 		t.Error(err)
 	}
@@ -458,19 +581,21 @@ type DummyDocument struct {
 	Beep string `json:"beep"`
 }
 
-func TestBefore(t *testing.T) {
-	if _, err := client.Create("dummy"); err != nil {
-		panic(err)
-	}
-}
-
 func TestDocumentPost(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	// use database
 	doc := &DummyDocument{
 		Document: Document{
 			ID: "testid",
 		},
-		Foo:  "bar",
-		Beep: "bopp",
 	}
 	if doc.Rev != "" {
 		t.Errorf("expected new document to have empty revision but got %s", doc.Rev)
@@ -482,9 +607,32 @@ func TestDocumentPost(t *testing.T) {
 	if !res.Ok {
 		t.Error("expected ok to be true but got false instead")
 	}
+	// remove database
+	if _, err := client.Delete(name); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestDocumentHead(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	// create document
+	doc := &DummyDocument{
+		Document: Document{
+			ID: "testid",
+		},
+	}
+	if _, err := db.Post(doc); err != nil {
+		t.Fatal(err)
+	}
+	// check head
 	head, err := db.Head("testid")
 	if err != nil {
 		t.Fatal(err)
@@ -495,9 +643,29 @@ func TestDocumentHead(t *testing.T) {
 }
 
 func TestDocumentGet(t *testing.T) {
-	doc := new(DummyDocument)
-	err := db.Get(doc, "testid")
+	name, err := RandDBName(10)
 	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	// create document
+	doc := &DummyDocument{
+		Document: Document{
+			ID: "testid",
+		},
+		Foo:  "bar",
+		Beep: "bopp",
+	}
+	if _, err := db.Post(doc); err != nil {
+		t.Fatal(err)
+	}
+	// now test getting the document
+	d := new(DummyDocument)
+	if err := db.Get(d, "testid"); err != nil {
 		t.Fatal(err)
 	}
 	if doc.Foo != "bar" {
@@ -509,15 +677,34 @@ func TestDocumentGet(t *testing.T) {
 }
 
 func TestDocumentPut(t *testing.T) {
-	// get document
-	doc := new(DummyDocument)
-	err := db.Get(doc, "testid")
+	name, err := RandDBName(10)
 	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	// create document
+	doc := &DummyDocument{
+		Document: Document{
+			ID: "testid",
+		},
+		Foo:  "bar",
+		Beep: "bopp",
+	}
+	if _, err := db.Post(doc); err != nil {
+		t.Fatal(err)
+	}
+	// get document
+	d := new(DummyDocument)
+	if err := db.Get(d, "testid"); err != nil {
 		t.Fatal(err)
 	}
 	// change document
-	doc.Foo = "baz"
-	res, err := db.Put(doc)
+	d.Foo = "baz"
+	res, err := db.Put(d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -530,14 +717,33 @@ func TestDocumentPut(t *testing.T) {
 }
 
 func TestDocumentDelete(t *testing.T) {
-	// get document
-	doc := new(DummyDocument)
-	err := db.Get(doc, "testid")
+	name, err := RandDBName(10)
 	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	// create document
+	doc := &DummyDocument{
+		Document: Document{
+			ID: "testid",
+		},
+		Foo:  "bar",
+		Beep: "bopp",
+	}
+	if _, err := db.Post(doc); err != nil {
+		t.Fatal(err)
+	}
+	// get document
+	d := new(DummyDocument)
+	if err := db.Get(d, "testid"); err != nil {
 		t.Fatal(err)
 	}
 	// delete document
-	res, err := db.Delete(doc)
+	res, err := db.Delete(d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -550,6 +756,15 @@ func TestDocumentDelete(t *testing.T) {
 }
 
 func TestDocumentPutAttachment(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
 	doc := &DummyDocument{
 		Document: Document{
 			ID: "testid",
@@ -572,15 +787,33 @@ func TestDocumentPutAttachment(t *testing.T) {
 // Test added because updating an existing document that had an attachment caused an error.
 // After adding more fields to Attachment struct it now works.
 func TestUpdateDocumentWithAttachment(t *testing.T) {
-	// get existing document
-	doc := &DummyDocument{}
-	err := db.Get(doc, "testid")
+	name, err := RandDBName(10)
 	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	doc := &DummyDocument{
+		Document: Document{
+			ID: "testid",
+		},
+		Foo:  "bar",
+		Beep: "bopp",
+	}
+	if _, err := db.PutAttachment(doc, "./test/dog.jpg"); err != nil {
+		t.Fatal(err)
+	}
+	// get existing document
+	d := &DummyDocument{}
+	if err := db.Get(d, "testid"); err != nil {
 		t.Fatal(err)
 	}
 	// update document with attachment
-	doc.Foo = "awesome"
-	res, err := db.Put(doc)
+	d.Foo = "awesome"
+	res, err := db.Put(d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -593,6 +826,15 @@ func TestUpdateDocumentWithAttachment(t *testing.T) {
 }
 
 func TestDocumentBulkDocs(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
 	// first dummy document
 	doc1 := &DummyDocument{
 		Foo:  "foo1",
@@ -605,7 +847,6 @@ func TestDocumentBulkDocs(t *testing.T) {
 	}
 	// slice of dummy document
 	docs := []CouchDoc{doc1, doc2}
-
 	res, err := db.Bulk(docs)
 	if err != nil {
 		t.Fatal(err)
@@ -619,6 +860,34 @@ func TestDocumentBulkDocs(t *testing.T) {
 }
 
 func TestAllDocs(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	// first dummy document
+	doc1 := &DummyDocument{
+		Foo:  "foo1",
+		Beep: "beep1",
+	}
+	// second dummy document
+	doc2 := &DummyDocument{
+		Foo:  "foo2",
+		Beep: "beep2",
+	}
+	doc3 := &DummyDocument{
+		Foo:  "foo3",
+		Beep: "beep3",
+	}
+	// slice of dummy document
+	docs := []CouchDoc{doc1, doc2, doc3}
+	if _, err := db.Bulk(docs); err != nil {
+		t.Error(err)
+	}
 	res, err := db.AllDocs(nil)
 	if err != nil {
 		t.Fatal(err)
@@ -723,14 +992,6 @@ func TestSecurity(t *testing.T) {
 	}
 }
 
-func TestAfter(t *testing.T) {
-	if _, err := client.Delete("dummy"); err != nil {
-		t.Fatal(err)
-	}
-}
-
-// end database tests
-
 // view tests
 type DataDocument struct {
 	Document
@@ -748,11 +1009,17 @@ type Person struct {
 	Gender string  `json:"gender"`
 }
 
-func TestViewBefore(t *testing.T) {
-	// create database
-	if _, err := cView.Create("gotest"); err != nil {
-		t.Fatal(err)
+func TestView(t *testing.T) {
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
 	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	// create database
 	design := &DesignDocument{
 		Document: Document{
 			ID: "_design/test",
@@ -788,7 +1055,7 @@ func TestViewBefore(t *testing.T) {
 			},
 		},
 	}
-	if _, err := dbView.Post(design); err != nil {
+	if _, err := db.Post(design); err != nil {
 		t.Fatal(err)
 	}
 	// create design document for person
@@ -814,7 +1081,7 @@ func TestViewBefore(t *testing.T) {
 			},
 		},
 	}
-	if _, err := dbView.Post(&designPerson); err != nil {
+	if _, err := db.Post(&designPerson); err != nil {
 		t.Fatal(err)
 	}
 	// create dummy data
@@ -824,7 +1091,7 @@ func TestViewBefore(t *testing.T) {
 		Beep: "beep1",
 		Age:  10,
 	}
-	if _, err := dbView.Post(doc1); err != nil {
+	if _, err := db.Post(doc1); err != nil {
 		t.Fatal(err)
 	}
 	doc2 := &DataDocument{
@@ -833,7 +1100,7 @@ func TestViewBefore(t *testing.T) {
 		Beep: "beep2",
 		Age:  20,
 	}
-	if _, err := dbView.Post(doc2); err != nil {
+	if _, err := db.Post(doc2); err != nil {
 		t.Fatal(err)
 	}
 	// create multiple persons
@@ -863,157 +1130,155 @@ func TestViewBefore(t *testing.T) {
 		}
 	}
 	// bulk save people to database
-	if _, err := dbView.Bulk(people); err != nil {
+	if _, err := db.Bulk(people); err != nil {
 		t.Fatal(err)
 	}
-}
 
-func TestViewGet(t *testing.T) {
-	view := dbView.View("test")
-	params := QueryParameters{}
-	res, err := view.Get("foo", params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if res.TotalRows != 2 {
-		t.Errorf("expected total rows to be 2 but got %d", res.TotalRows)
-	}
-	if res.Offset != 0 {
-		t.Errorf("expected offset to be 0 but got %d", res.Offset)
+	// run sub test
+	t.Run("get", func(t *testing.T) {
+		view := db.View("test")
+		params := QueryParameters{}
+		res, err := view.Get("foo", params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res.TotalRows != 2 {
+			t.Errorf("expected total rows to be 2 but got %d", res.TotalRows)
+		}
+		if res.Offset != 0 {
+			t.Errorf("expected offset to be 0 but got %d", res.Offset)
+		}
+	})
+
+	t.Run("design document name", func(t *testing.T) {
+		doc := new(DesignDocument)
+		err := db.Get(doc, "_design/test")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if doc.Name() != "test" {
+			t.Errorf("expected name to be test but got %s", doc.Name())
+		}
+	})
+
+	t.Run("design document view", func(t *testing.T) {
+		doc := new(DesignDocument)
+		err := db.Get(doc, "_design/test")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, ok := doc.Views["foo"]; !ok {
+			t.Error("expected foo mapping function to exists but it does not")
+		}
+	})
+
+	t.Run("get with query parameters", func(t *testing.T) {
+		view := db.View("test")
+		params := QueryParameters{
+			Key: pointer.String(fmt.Sprintf("%q", "foo1")),
+		}
+		res, err := view.Get("foo", params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Rows) != 1 {
+			t.Errorf("expected only one row but got %d", len(res.Rows))
+		}
+	})
+
+	t.Run("get with start and end key", func(t *testing.T) {
+		view := db.View("test")
+		params := QueryParameters{
+			StartKey: pointer.String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
+			EndKey:   pointer.String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
+		}
+		res, err := view.Get("complex", params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Rows) != 1 {
+			t.Errorf("expected only one row but got %d", len(res.Rows))
+		}
+	})
+
+	t.Run("get with integer", func(t *testing.T) {
+		view := db.View("test")
+		params := QueryParameters{
+			StartKey: pointer.String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
+			EndKey:   pointer.String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
+		}
+		res, err := view.Get("int", params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Rows) != 1 {
+			t.Errorf("expected only one row but got %d", len(res.Rows))
+		}
+	})
+
+	t.Run("get with reduce", func(t *testing.T) {
+		view := db.View("person")
+		params := QueryParameters{}
+		res, err := view.Get("ageByGender", params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ageTotalSum := res.Rows[0].Value.(float64)
+		if ageTotalSum != 372 {
+			t.Fatalf("expected age 372 but got %v", ageTotalSum)
+		}
+	})
+
+	t.Run("get with reduce and group", func(t *testing.T) {
+		view := db.View("person")
+		params := QueryParameters{
+			Key:        pointer.String(fmt.Sprintf("%q", "female")),
+			GroupLevel: pointer.Int(1),
+		}
+		res, err := view.Get("ageByGender", params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		ageTotalFemale := res.Rows[0].Value.(float64)
+		if ageTotalFemale != 147 {
+			t.Fatalf("expected age 147 but got %v", ageTotalFemale)
+		}
+	})
+
+	t.Run("get without reduce", func(t *testing.T) {
+		view := db.View("person")
+		params := QueryParameters{
+			Key:    pointer.String(fmt.Sprintf("%q", "male")),
+			Reduce: pointer.Bool(false),
+		}
+		res, err := view.Get("ageByGender", params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Rows) != 6 {
+			t.Fatalf("expected 6 rows but got %d instead", len(res.Rows))
+		}
+	})
+
+	t.Run("post", func(t *testing.T) {
+		view := db.View("person")
+		params := QueryParameters{
+			Reduce: pointer.Bool(false),
+		}
+		res, err := view.Post("ageByGender", []string{"male"}, params)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(res.Rows) != 6 {
+			t.Fatalf("expected 6 rows but got %d instead", len(res.Rows))
+		}
+	})
+
+	// remove database
+	if _, err := client.Delete(name); err != nil {
+		t.Error(err)
 	}
 }
-
-func TestDesignDocumentName(t *testing.T) {
-	doc := new(DesignDocument)
-	err := dbView.Get(doc, "_design/test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if doc.Name() != "test" {
-		t.Errorf("expected name to be test but got %s", doc.Name())
-	}
-}
-
-func TestDesignDocumentView(t *testing.T) {
-	doc := new(DesignDocument)
-	err := dbView.Get(doc, "_design/test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := doc.Views["foo"]; !ok {
-		t.Error("expected foo mapping function to exists but it does not")
-	}
-}
-
-func TestViewGetWithQueryParameters(t *testing.T) {
-	view := dbView.View("test")
-	params := QueryParameters{
-		Key: pointer.String(fmt.Sprintf("%q", "foo1")),
-	}
-	res, err := view.Get("foo", params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(res.Rows) != 1 {
-		t.Errorf("expected only one row but got %d", len(res.Rows))
-	}
-}
-
-func TestViewGetWithStartKeyEndKey(t *testing.T) {
-	view := dbView.View("test")
-	params := QueryParameters{
-		StartKey: pointer.String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
-		EndKey:   pointer.String(fmt.Sprintf("[%q,%q]", "foo2", "beep2")),
-	}
-	res, err := view.Get("complex", params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(res.Rows) != 1 {
-		t.Errorf("expected only one row but got %d", len(res.Rows))
-	}
-}
-
-func TestViewGetWithInteger(t *testing.T) {
-	view := dbView.View("test")
-	params := QueryParameters{
-		StartKey: pointer.String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
-		EndKey:   pointer.String(fmt.Sprintf("[%q,%d]", "foo2", 20)),
-	}
-	res, err := view.Get("int", params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(res.Rows) != 1 {
-		t.Errorf("expected only one row but got %d", len(res.Rows))
-	}
-}
-
-func TestViewGetWithReduce(t *testing.T) {
-	view := dbView.View("person")
-	params := QueryParameters{}
-	res, err := view.Get("ageByGender", params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ageTotalSum := res.Rows[0].Value.(float64)
-	if ageTotalSum != 372 {
-		t.Fatalf("expected age 372 but got %v", ageTotalSum)
-	}
-}
-
-func TestViewGetWithReduceAndGroup(t *testing.T) {
-	view := dbView.View("person")
-	params := QueryParameters{
-		Key:        pointer.String(fmt.Sprintf("%q", "female")),
-		GroupLevel: pointer.Int(1),
-	}
-	res, err := view.Get("ageByGender", params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ageTotalFemale := res.Rows[0].Value.(float64)
-	if ageTotalFemale != 147 {
-		t.Fatalf("expected age 147 but got %v", ageTotalFemale)
-	}
-}
-
-func TestViewGetWithoutReduce(t *testing.T) {
-	view := dbView.View("person")
-	params := QueryParameters{
-		Key:    pointer.String(fmt.Sprintf("%q", "male")),
-		Reduce: pointer.Bool(false),
-	}
-	res, err := view.Get("ageByGender", params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(res.Rows) != 6 {
-		t.Fatalf("expected 6 rows but got %d instead", len(res.Rows))
-	}
-}
-
-func TestViewPost(t *testing.T) {
-	view := dbView.View("person")
-	params := QueryParameters{
-		Reduce: pointer.Bool(false),
-	}
-	res, err := view.Post("ageByGender", []string{"male"}, params)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(res.Rows) != 6 {
-		t.Fatalf("expected 6 rows but got %d instead", len(res.Rows))
-	}
-}
-
-func TestViewAfter(t *testing.T) {
-	if _, err := cView.Delete("gotest"); err != nil {
-		t.Fatal(err)
-	}
-}
-
-// test utils
 
 // mimeType()
 var mimeTypeTests = []struct {
