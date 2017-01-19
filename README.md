@@ -20,8 +20,12 @@ import (
 )
 
 func main() {
+	u, err := url.Parse("http://127.0.0.1:5984/")
+	if err != nil {
+		panic(err)
+	}
 	// create a new client
-	client, err := couchdb.NewClient("http://127.0.0.1:5984/")
+	client, err := couchdb.NewClient(u)
 	if err != nil {
 		panic(err)
 	}
