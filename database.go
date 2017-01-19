@@ -11,10 +11,26 @@ import (
 	"github.com/google/go-querystring/query"
 )
 
+// DatabaseService is an interface for dealing with a single CouchDB database.
+type DatabaseService interface {
+	AllDocs(params *QueryParameters) (*ViewResponse, error)
+	Head(id string) (*http.Response, error)
+	Get(doc CouchDoc, id string) error
+	Put(doc CouchDoc) (*DocumentResponse, error)
+	Post(doc CouchDoc) (*DocumentResponse, error)
+	Delete(doc CouchDoc) (*DocumentResponse, error)
+	PutAttachment(doc CouchDoc, path string) (*DocumentResponse, error)
+	Bulk(docs []CouchDoc) ([]DocumentResponse, error)
+	Purge(req map[string][]string) (*PurgeResponse, error)
+	GetSecurity() (*SecurityDocument, error)
+	PutSecurity(secDoc SecurityDocument) (*DatabaseResponse, error)
+	View(name string) ViewService
+}
+
 // Database performs actions on certain database
 type Database struct {
-	*Client
-	Name string
+	Client *Client
+	Name   string
 }
 
 // AllDocs returns all documents in selected database.
@@ -30,7 +46,8 @@ func (db *Database) AllDocs(params *QueryParameters) (*ViewResponse, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	return newViewResponse(res.Body)
+	var response ViewResponse
+	return &response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // Head request.
@@ -66,7 +83,8 @@ func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	return newDocumentResponse(res.Body)
+	var response DocumentResponse
+	return &response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // Post document.
@@ -80,7 +98,8 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	return newDocumentResponse(res.Body)
+	var response DocumentResponse
+	return &response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // Delete document.
@@ -91,7 +110,8 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	return newDocumentResponse(res.Body)
+	var response DocumentResponse
+	return &response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // PutAttachment adds attachment to document
@@ -140,7 +160,8 @@ func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse,
 		return nil, err
 	}
 	defer res.Body.Close()
-	return newDocumentResponse(res.Body)
+	var response DocumentResponse
+	return &response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // Bulk allows to create and update multiple documents
@@ -167,11 +188,11 @@ func (db *Database) Bulk(docs []CouchDoc) ([]DocumentResponse, error) {
 }
 
 // View returns view for given name.
-func (db *Database) View(name string) View {
+func (db *Database) View(name string) ViewService {
 	u := fmt.Sprintf("%s_design/%s/", db.Name, name)
-	return View{
-		URL:      u,
-		Database: db,
+	return &View{
+		URL:    u,
+		Client: db.Client,
 	}
 }
 

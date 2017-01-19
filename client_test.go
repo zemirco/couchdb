@@ -13,7 +13,7 @@ import (
 	"github.com/segmentio/pointer"
 )
 
-var client *Client
+var client ClientService
 
 func TestMain(m *testing.M) {
 	u, err := url.Parse("http://127.0.0.1:5984/")
@@ -353,13 +353,6 @@ func TestDeleteFail(t *testing.T) {
 		if couchdbError.StatusCode != http.StatusNotFound {
 			t.Fatal("should not delete non existing database")
 		}
-	}
-}
-
-func TestUse(t *testing.T) {
-	db := client.Use("_users")
-	if db.Name != "_users/" {
-		t.Errorf("expected _users/ got %s", db.Name)
 	}
 }
 

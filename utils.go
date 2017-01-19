@@ -39,18 +39,6 @@ func newError(res *http.Response) error {
 	return error
 }
 
-// Create new CouchDB response for any document method.
-func newDocumentResponse(body io.Reader) (*DocumentResponse, error) {
-	response := &DocumentResponse{}
-	return response, json.NewDecoder(body).Decode(&response)
-}
-
-// Create new CouchDB response for any database method.
-func newDatabaseResponse(body io.Reader) (*DatabaseResponse, error) {
-	response := &DatabaseResponse{}
-	return response, json.NewDecoder(body).Decode(&response)
-}
-
 // Write JSON to multipart/related.
 func writeJSON(document *Document, writer *multipart.Writer, file *os.File) error {
 	partHeaders := textproto.MIMEHeader{}

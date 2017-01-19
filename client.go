@@ -11,6 +11,25 @@ import (
 	"time"
 )
 
+// ClientService is an interface for dealing with a single CouchDB database.
+type ClientService interface {
+	Info() (*Server, error)
+	ActiveTasks() ([]Task, error)
+	All() ([]string, error)
+	Get(name string) (*DatabaseInfo, error)
+	Create(name string) (*DatabaseResponse, error)
+	Delete(name string) (*DatabaseResponse, error)
+	CreateUser(user User) (*DocumentResponse, error)
+	GetUser(name string) (*User, error)
+	DeleteUser(user *User) (*DocumentResponse, error)
+	CreateSession(name, password string) (*PostSessionResponse, error)
+	GetSession() (*GetSessionResponse, error)
+	DeleteSession() (*DatabaseResponse, error)
+	Use(name string) DatabaseService
+	Replicate(req ReplicationRequest) (*ReplicationResponse, error)
+	Request(method, uri string, data io.Reader, contentType string) (*http.Response, error)
+}
+
 // Client holds all info for database client
 type Client struct {
 	Username  string
@@ -20,21 +39,32 @@ type Client struct {
 }
 
 // NewClient returns new couchdb client for given url
-func NewClient(u *url.URL) (*Client, error) {
+func NewClient(u *url.URL) (ClientService, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{"", "", u, jar}, nil
+	c := &Client{
+		Username:  "",
+		Password:  "",
+		BaseURL:   u,
+		CookieJar: jar,
+	}
+	return c, nil
 }
 
 // NewAuthClient returns new couchdb client with basic authentication
-func NewAuthClient(username, password string, u *url.URL) (*Client, error) {
+func NewAuthClient(username, password string, u *url.URL) (ClientService, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{username, password, u, jar}, nil
+	return &Client{
+		Username:  username,
+		Password:  password,
+		BaseURL:   u,
+		CookieJar: jar,
+	}, nil
 }
 
 // Info returns some information about the server
@@ -93,7 +123,8 @@ func (c *Client) Create(name string) (*DatabaseResponse, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	return newDatabaseResponse(res.Body)
+	var response DatabaseResponse
+	return &response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // Delete database.
@@ -104,7 +135,8 @@ func (c *Client) Delete(name string) (*DatabaseResponse, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	return newDatabaseResponse(res.Body)
+	var response DatabaseResponse
+	return &response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // CreateUser creates a new user in _users database
@@ -119,7 +151,8 @@ func (c *Client) CreateUser(user User) (*DocumentResponse, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	return newDocumentResponse(res.Body)
+	var response DocumentResponse
+	return &response, json.NewDecoder(res.Body).Decode(&response)
 }
 
 // GetUser returns user by given name
@@ -182,8 +215,8 @@ func (c *Client) DeleteSession() (*DatabaseResponse, error) {
 }
 
 // Use database.
-func (c *Client) Use(name string) Database {
-	return Database{
+func (c *Client) Use(name string) DatabaseService {
+	return &Database{
 		Name:   name + "/",
 		Client: c,
 	}
