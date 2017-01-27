@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
@@ -1648,7 +1648,7 @@ func clean(s string) string {
 }
 
 func TestParse(t *testing.T) {
-	docs, err := client.Parse(path.Join("example", "design"))
+	docs, err := client.Parse(filepath.Join("example", "design"))
 	if err != nil {
 		t.Error(err)
 	}
@@ -1725,7 +1725,7 @@ func TestSeed(t *testing.T) {
 		t.Error(err)
 	}
 	db := client.Use(name)
-	docs, err := client.Parse(path.Join("example", "design"))
+	docs, err := client.Parse(filepath.Join("example", "design"))
 	if err != nil {
 		t.Error(err)
 	}

@@ -10,7 +10,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -405,7 +405,7 @@ func (c *Client) Parse(dirname string) ([]DesignDocument, error) {
 	}
 	for _, dir := range dirs {
 		designDocumentName := dir.Name()
-		ff, err := ioutil.ReadDir(path.Join(dirname, designDocumentName))
+		ff, err := ioutil.ReadDir(filepath.Join(dirname, designDocumentName))
 		if err != nil {
 			return nil, err
 		}
@@ -421,14 +421,14 @@ func (c *Client) Parse(dirname string) ([]DesignDocument, error) {
 			// create new view inside design document
 			view := DesignDocumentView{}
 			// get map function
-			pathMap := path.Join(dirname, designDocumentName, viewName, fileNameMap)
+			pathMap := filepath.Join(dirname, designDocumentName, viewName, fileNameMap)
 			bMap, err := ioutil.ReadFile(pathMap)
 			if err != nil {
 				return nil, err
 			}
 			view.Map = string(bMap)
 			// get reduce function only if it exists
-			pathReduce := path.Join(dirname, designDocumentName, viewName, fileNameReduce)
+			pathReduce := filepath.Join(dirname, designDocumentName, viewName, fileNameReduce)
 			if _, err := os.Stat(pathReduce); err != nil {
 				// ignore error that file does not exist but return other errors
 				if !os.IsNotExist(err) {
