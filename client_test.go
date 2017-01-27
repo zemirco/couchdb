@@ -1593,6 +1593,26 @@ func TestDiff(t *testing.T) {
 			changes:   1,
 			deletions: 1,
 		},
+		{
+			desc:  "database has internal design document which should not be deleted",
+			cache: []DesignDocument{},
+			database: []DesignDocument{
+				{
+					Document: Document{
+						ID:  "_design/_auth",
+						Rev: "abc",
+					},
+					Views: map[string]DesignDocumentView{
+						"validate_doc_update": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			additions: 0,
+			changes:   0,
+			deletions: 0,
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {

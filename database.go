@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/google/go-querystring/query"
 )
@@ -369,7 +370,8 @@ func diff(cache, db []DesignDocument) difference {
 				exists = true
 			}
 		}
-		if !exists {
+		// do not delete internal design documents like _auth
+		if !exists && !strings.HasPrefix(d.Name(), "_") {
 			di.deletions = append(di.deletions, d)
 		}
 	}
