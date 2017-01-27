@@ -1340,7 +1340,8 @@ func TestDiff(t *testing.T) {
 			database: []DesignDocument{
 				{
 					Document: Document{
-						ID: "_design/player",
+						ID:  "_design/player",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byName": {
@@ -1350,7 +1351,8 @@ func TestDiff(t *testing.T) {
 				},
 				{
 					Document: Document{
-						ID: "_design/user",
+						ID:  "_design/user",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byToken": {
@@ -1380,7 +1382,8 @@ func TestDiff(t *testing.T) {
 			database: []DesignDocument{
 				{
 					Document: Document{
-						ID: "_design/player",
+						ID:  "_design/player",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byName": {
@@ -1410,7 +1413,8 @@ func TestDiff(t *testing.T) {
 			database: []DesignDocument{
 				{
 					Document: Document{
-						ID: "_design/player",
+						ID:  "_design/player",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byName": {
@@ -1440,7 +1444,8 @@ func TestDiff(t *testing.T) {
 			database: []DesignDocument{
 				{
 					Document: Document{
-						ID: "_design/player",
+						ID:  "_design/player",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byName": {
@@ -1450,7 +1455,8 @@ func TestDiff(t *testing.T) {
 				},
 				{
 					Document: Document{
-						ID: "_design/user",
+						ID:  "_design/user",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byToken": {
@@ -1490,7 +1496,8 @@ func TestDiff(t *testing.T) {
 			database: []DesignDocument{
 				{
 					Document: Document{
-						ID: "_design/player",
+						ID:  "_design/player",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byName": {
@@ -1530,7 +1537,8 @@ func TestDiff(t *testing.T) {
 			database: []DesignDocument{
 				{
 					Document: Document{
-						ID: "_design/player",
+						ID:  "_design/player",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byName": {
@@ -1560,7 +1568,8 @@ func TestDiff(t *testing.T) {
 			database: []DesignDocument{
 				{
 					Document: Document{
-						ID: "_design/player",
+						ID:  "_design/player",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byName": {
@@ -1570,7 +1579,8 @@ func TestDiff(t *testing.T) {
 				},
 				{
 					Document: Document{
-						ID: "_design/user",
+						ID:  "_design/user",
+						Rev: "abc",
 					},
 					Views: map[string]DesignDocumentView{
 						"byToken": {
