@@ -339,12 +339,6 @@ func diff(cache, db []DesignDocument) difference {
 		changes:   []DesignDocument{},
 		deletions: []DesignDocument{},
 	}
-	// remove revision from design documents from database.
-	// with a revision a comparison using reflect.DeepEqual will fail.
-	for index, designDoc := range db {
-		designDoc.Rev = ""
-		db[index] = designDoc
-	}
 	// check for additions changes
 	// design document is in cache but not in db
 	for _, c := range cache {
@@ -353,7 +347,9 @@ func diff(cache, db []DesignDocument) difference {
 		for _, d := range db {
 			if d.ID == c.ID {
 				exists = true
-				if !reflect.DeepEqual(c, d) {
+				// check for different map/reduce and language
+				// do not check for different revision
+				if !reflect.DeepEqual(c.Views, d.Views) {
 					existsButDifferent = true
 				}
 			}
