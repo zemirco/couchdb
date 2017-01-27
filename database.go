@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"reflect"
 
 	"github.com/google/go-querystring/query"
 )
@@ -14,6 +15,7 @@ import (
 // DatabaseService is an interface for dealing with a single CouchDB database.
 type DatabaseService interface {
 	AllDocs(params *QueryParameters) (*ViewResponse, error)
+	AllDesignDocs() ([]DesignDocument, error)
 	Head(id string) (*http.Response, error)
 	Get(doc CouchDoc, id string) error
 	Put(doc CouchDoc) (*DocumentResponse, error)
@@ -25,12 +27,40 @@ type DatabaseService interface {
 	GetSecurity() (*SecurityDocument, error)
 	PutSecurity(secDoc SecurityDocument) (*DatabaseResponse, error)
 	View(name string) ViewService
+	Seed([]DesignDocument) error
 }
 
 // Database performs actions on certain database
 type Database struct {
 	Client *Client
 	Name   string
+}
+
+// AllDesignDocs returns all design documents from database.
+// http://stackoverflow.com/questions/2814352/get-all-design-documents-in-couchdb
+func (db *Database) AllDesignDocs() ([]DesignDocument, error) {
+	startKey := fmt.Sprintf("%q", "_design/")
+	endKey := fmt.Sprintf("%q", "_design0")
+	includeDocs := true
+	q := QueryParameters{
+		StartKey:    &startKey,
+		EndKey:      &endKey,
+		IncludeDocs: &includeDocs,
+	}
+	res, err := db.AllDocs(&q)
+	if err != nil {
+		return nil, err
+	}
+	docs := make([]interface{}, len(res.Rows))
+	for index, row := range res.Rows {
+		docs[index] = row.Doc
+	}
+	designDocs := make([]DesignDocument, len(docs))
+	b, err := json.Marshal(docs)
+	if err != nil {
+		return nil, err
+	}
+	return designDocs, json.Unmarshal(b, &designDocs)
 }
 
 // AllDocs returns all documents in selected database.
@@ -259,4 +289,87 @@ func (db *Database) PutSecurity(secDoc SecurityDocument) (*DatabaseResponse, err
 	defer res.Body.Close()
 	r := new(DatabaseResponse)
 	return r, json.NewDecoder(res.Body).Decode(r)
+}
+
+// Seed makes sure all your design documents are up to date.
+func (db *Database) Seed(cache []DesignDocument) error {
+	// query all docs to get all design documents
+	designDocs, err := db.AllDesignDocs()
+	if err != nil {
+		return err
+	}
+	difference := diff(cache, designDocs)
+	// remove all deletions
+	for _, doc := range difference.deletions {
+		if _, err := db.Delete(&doc); err != nil {
+			return err
+		}
+	}
+	// update all changes
+	for _, doc := range difference.changes {
+		// get design document first to get current revision
+		var old DesignDocument
+		if err := db.Get(&old, doc.ID); err != nil {
+			return err
+		}
+		// update document with new version
+		doc.Rev = old.Rev
+		if _, err := db.Put(&doc); err != nil {
+			return err
+		}
+	}
+	// add all additions
+	for _, doc := range difference.additions {
+		if _, err := db.Put(&doc); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+type difference struct {
+	additions []DesignDocument
+	changes   []DesignDocument
+	deletions []DesignDocument
+}
+
+func diff(cache, db []DesignDocument) difference {
+	di := difference{
+		additions: []DesignDocument{},
+		changes:   []DesignDocument{},
+		deletions: []DesignDocument{},
+	}
+	// check for additions changes
+	// design document is in cache but not in db
+	for _, c := range cache {
+		exists := false
+		existsButDifferent := false
+		for _, d := range db {
+			if d.ID == c.ID {
+				exists = true
+				if !reflect.DeepEqual(c, d) {
+					existsButDifferent = true
+				}
+			}
+		}
+		if !exists {
+			di.additions = append(di.additions, c)
+		} else if existsButDifferent {
+			di.changes = append(di.changes, c)
+		}
+	}
+	// check for deletions
+	// design document is in db but not in cache
+	for _, d := range db {
+		exists := false
+		for _, c := range cache {
+			if d.ID == c.ID {
+				exists = true
+			}
+		}
+		if !exists {
+			di.deletions = append(di.deletions, d)
+		}
+	}
+	return di
 }

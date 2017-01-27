@@ -2,6 +2,8 @@ package couchdb
 
 import "strings"
 
+const langJavaScript = "javascript"
+
 // DesignDocument is a special type of CouchDB document that contains application code.
 // http://docs.couchdb.org/en/latest/json-structure.html#design-document
 type DesignDocument struct {

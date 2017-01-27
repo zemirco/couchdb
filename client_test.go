@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/segmentio/pointer"
@@ -438,7 +440,7 @@ func TestReplicationFilter(t *testing.T) {
 		Document: Document{
 			ID: "_design/animals",
 		},
-		Language: "javascript",
+		Language: langJavaScript,
 		Filters: map[string]string{
 			"byOwner": `
 				function(doc, req) {
@@ -1017,7 +1019,7 @@ func TestView(t *testing.T) {
 		Document: Document{
 			ID: "_design/test",
 		},
-		Language: "javascript",
+		Language: langJavaScript,
 		Views: map[string]DesignDocumentView{
 			"foo": {
 				Map: `
@@ -1056,7 +1058,7 @@ func TestView(t *testing.T) {
 		Document: Document{
 			ID: "_design/person",
 		},
-		Language: "javascript",
+		Language: langJavaScript,
 		Views: map[string]DesignDocumentView{
 			"ageByGender": {
 				Map: `
@@ -1291,5 +1293,498 @@ func TestMimeType(t *testing.T) {
 		if actual != tt.out {
 			t.Errorf("mimeType(%s): expected %s, actual %s", tt.in, tt.out, actual)
 		}
+	}
+}
+
+func TestDiff(t *testing.T) {
+	tests := []struct {
+		desc      string
+		cache     []DesignDocument
+		database  []DesignDocument
+		additions int
+		changes   int
+		deletions int
+	}{
+		{
+			desc: "database is empty",
+			cache: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+				{
+					Document: Document{
+						ID: "_design/user",
+					},
+					Views: map[string]DesignDocumentView{
+						"byToken": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			database:  []DesignDocument{},
+			additions: 2,
+			changes:   0,
+			deletions: 0,
+		},
+		{
+			desc:  "cache is empty",
+			cache: []DesignDocument{},
+			database: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+				{
+					Document: Document{
+						ID: "_design/user",
+					},
+					Views: map[string]DesignDocumentView{
+						"byToken": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			additions: 0,
+			changes:   0,
+			deletions: 2,
+		},
+		{
+			desc: "cache and database are equal",
+			cache: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			database: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			additions: 0,
+			changes:   0,
+			deletions: 0,
+		},
+		{
+			desc: "database out of date",
+			cache: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function(doc) {}",
+						},
+					},
+				},
+			},
+			database: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			additions: 0,
+			changes:   1,
+			deletions: 0,
+		},
+		{
+			desc: "database has too many entries",
+			cache: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			database: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+				{
+					Document: Document{
+						ID: "_design/user",
+					},
+					Views: map[string]DesignDocumentView{
+						"byToken": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			additions: 0,
+			changes:   0,
+			deletions: 1,
+		},
+		{
+			desc: "database is missing a design document",
+			cache: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+				{
+					Document: Document{
+						ID: "_design/user",
+					},
+					Views: map[string]DesignDocumentView{
+						"byToken": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			database: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			additions: 1,
+			changes:   0,
+			deletions: 0,
+		},
+		{
+			desc: "database is missing a design document and has an old version of anther one",
+			cache: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function(doc) {}",
+						},
+					},
+				},
+				{
+					Document: Document{
+						ID: "_design/user",
+					},
+					Views: map[string]DesignDocumentView{
+						"byToken": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			database: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			additions: 1,
+			changes:   1,
+			deletions: 0,
+		},
+		{
+			desc: "database has too many design documents and an old version of another one",
+			cache: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function(doc) {}",
+						},
+					},
+				},
+			},
+			database: []DesignDocument{
+				{
+					Document: Document{
+						ID: "_design/player",
+					},
+					Views: map[string]DesignDocumentView{
+						"byName": {
+							Map: "function() {}",
+						},
+					},
+				},
+				{
+					Document: Document{
+						ID: "_design/user",
+					},
+					Views: map[string]DesignDocumentView{
+						"byToken": {
+							Map: "function() {}",
+						},
+					},
+				},
+			},
+			additions: 0,
+			changes:   1,
+			deletions: 1,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			difference := diff(test.cache, test.database)
+			if len(difference.additions) != test.additions {
+				t.Errorf(
+					"exp %d additions but got %d",
+					test.additions,
+					len(difference.additions),
+				)
+			}
+			if len(difference.changes) != test.changes {
+				t.Errorf(
+					"exp %d changes but got %d",
+					test.changes,
+					len(difference.changes),
+				)
+			}
+			if len(difference.deletions) != test.deletions {
+				t.Errorf(
+					"exp %d deletions but got %d",
+					test.deletions,
+					len(difference.deletions),
+				)
+			}
+		})
+	}
+}
+
+// remove all white space and line breaks from string
+func clean(s string) string {
+	return strings.Replace(strings.Replace(s, " ", "", -1), "\n", "", -1)
+}
+
+func TestParse(t *testing.T) {
+	docs, err := client.Parse(path.Join("example", "design"))
+	if err != nil {
+		t.Error(err)
+	}
+	if len(docs) != 2 {
+		t.Errorf("expected 2 design documents but got %d", len(docs))
+	}
+	// check first design document
+	player := docs[0]
+	if player.Name() != "player" {
+		t.Errorf("expected 1st design document to be player but got %s", docs[0].Name())
+	}
+	byAge, ok := player.Views["byAge"]
+	if !ok {
+		t.Error("cannot find byAge view in first design document")
+	}
+	byAgeMap := "function(doc){if(doc.type==='player'){emit(doc.age)}}"
+	if byAgeMap != clean(byAge.Map) {
+		t.Errorf("expected byAge map %s but got %s", byAgeMap, clean(byAge.Map))
+	}
+	byAgeReduce := "function(keys,values,rereduce){returnsum(values)}"
+	if byAgeReduce != clean(byAge.Reduce) {
+		t.Errorf("expected byAge reduce %s but got %s", byAgeReduce, clean(byAge.Reduce))
+	}
+	byName, ok := player.Views["byName"]
+	if !ok {
+		t.Error("cannot find byName view in first design document")
+	}
+	byNameMap := "function(doc){if(doc.type==='player'){emit(doc.name)}}"
+	if byNameMap != clean(byName.Map) {
+		t.Errorf("expected byName map %s but got %s", byNameMap, clean(byName.Map))
+	}
+	if byName.Reduce != "" {
+		t.Errorf("expected byName reduce to be empty but got %s", byName.Reduce)
+	}
+	// check second design document
+	user := docs[1]
+	if user.Name() != "user" {
+		t.Errorf("expected 2nd design document to be user but got %s", user.Name())
+	}
+	byEmail, ok := user.Views["byEmail"]
+	if !ok {
+		t.Error("cannot find byEmail view in second design document")
+	}
+	byEmailMap := "function(doc){if(doc.type==='user'){emit(doc.email)}}"
+	if byEmailMap != clean(byEmail.Map) {
+		t.Errorf("expected byEmail map %s but got %s", byEmailMap, clean(byEmail.Map))
+	}
+	byEmailReduce :=
+		"function(keys,values,rereduce){if(rereduce){returnsum(values)}else{returnvalues.length}}"
+	if byEmailReduce != clean(byEmail.Reduce) {
+		t.Errorf("expected byEmail reduce %s but got %s", byEmailReduce, clean(byEmail.Reduce))
+	}
+	byUsername, ok := user.Views["byUsername"]
+	if !ok {
+		t.Error("cannot find byUsername view in second design document")
+	}
+	byUsernameMap := "function(doc){if(doc.type==='user'){emit(doc.username)}}"
+	if byUsernameMap != clean(byUsername.Map) {
+		t.Errorf("expected byUsername map %s but got %s", byUsernameMap, clean(byUsername.Map))
+	}
+	if byUsername.Reduce != "" {
+		t.Errorf("expected byUsername reduce to be empty but got %s", byUsername.Reduce)
+	}
+}
+
+func TestSeed(t *testing.T) {
+	// create random database
+	name, err := RandDBName(10)
+	if err != nil {
+		t.Error(err)
+	}
+	// create database
+	if _, err := client.Create(name); err != nil {
+		t.Error(err)
+	}
+	db := client.Use(name)
+	docs, err := client.Parse(path.Join("example", "design"))
+	if err != nil {
+		t.Error(err)
+	}
+	// add some design documents
+	// ---
+	// player
+	// |- byAge
+	// |- byName
+	// user
+	// |- byEmail
+	// |- byUsername
+	if err := db.Seed(docs); err != nil {
+		t.Error(err)
+	}
+	// simulate player design document has changed on disk
+	changedPlayer := DesignDocument{
+		Document: Document{
+			ID: "_design/player",
+		},
+		Language: langJavaScript,
+		Views: map[string]DesignDocumentView{
+			"byName": {
+				Map: "function() {}",
+			},
+		},
+	}
+	// add new design document
+	car := DesignDocument{
+		Document: Document{
+			ID: "_design/car",
+		},
+		Language: langJavaScript,
+		Views: map[string]DesignDocumentView{
+			"byColor": {
+				Map: "function() {/* byColor map */}",
+			},
+			"byBrand": {
+				Map:    "function() {/* byBrand map */}",
+				Reduce: "function() {/* byBrand reduce */}",
+			},
+		},
+	}
+	// seed should
+	// - remove "_design/user" document
+	// - update "_design/player" document
+	// - add "_design/car" document
+	if err := db.Seed([]DesignDocument{changedPlayer, car}); err != nil {
+		t.Error(err)
+	}
+	// make sure "_design/player" has been updated
+	var playerDesignDoc DesignDocument
+	if err := db.Get(&playerDesignDoc, "_design/player"); err != nil {
+		t.Error(err)
+	}
+	if !strings.HasPrefix(playerDesignDoc.Rev, "2-") {
+		t.Errorf("exp. revision to start with 2- but got %s", playerDesignDoc.Rev)
+	}
+	byNameMap := playerDesignDoc.Views["byName"].Map
+	if byNameMap != "function() {}" {
+		t.Errorf("exp. byName map function to be empty but got %s", byNameMap)
+	}
+	// make sure "_design/user" has been deleted
+	var userDesignDoc DesignDocument
+	if err := db.Get(&userDesignDoc, "_design/user"); err != nil {
+		if cerr, ok := err.(*Error); ok {
+			if cerr.StatusCode != http.StatusNotFound {
+				t.Error(err)
+			}
+		} else {
+			t.Error(err)
+		}
+	}
+	// make sure "_design/car" exists
+	var carDesignDoc DesignDocument
+	if err := db.Get(&carDesignDoc, "_design/car"); err != nil {
+		t.Error(err)
+	}
+	byColorMap := carDesignDoc.Views["byColor"].Map
+	if byColorMap != "function() {/* byColor map */}" {
+		t.Errorf("expected byColor map function but got %s", byColorMap)
+	}
+	byBrand := carDesignDoc.Views["byBrand"]
+	if byBrand.Map != "function() {/* byBrand map */}" {
+		t.Errorf("expected byBrand map function but got %s", byBrand.Map)
+	}
+	if byBrand.Reduce != "function() {/* byBrand reduce */}" {
+		t.Errorf("expected byBrand reduce function but got %s", byBrand.Reduce)
+	}
+	if _, err := client.Delete(name); err != nil {
+		t.Error(err)
 	}
 }
