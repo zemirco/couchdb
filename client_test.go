@@ -15,7 +15,7 @@ import (
 	"github.com/segmentio/pointer"
 )
 
-var client ClientService
+var client *Client
 
 func TestMain(m *testing.M) {
 	u, err := url.Parse("http://127.0.0.1:5984/")

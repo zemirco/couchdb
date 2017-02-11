@@ -14,26 +14,6 @@ import (
 	"time"
 )
 
-// ClientService is an interface for dealing with a single CouchDB database.
-type ClientService interface {
-	Info() (*Server, error)
-	ActiveTasks() ([]Task, error)
-	All() ([]string, error)
-	Get(name string) (*DatabaseInfo, error)
-	Create(name string) (*DatabaseResponse, error)
-	Delete(name string) (*DatabaseResponse, error)
-	CreateUser(user User) (*DocumentResponse, error)
-	GetUser(name string) (*User, error)
-	DeleteUser(user *User) (*DocumentResponse, error)
-	CreateSession(name, password string) (*PostSessionResponse, error)
-	GetSession() (*GetSessionResponse, error)
-	DeleteSession() (*DatabaseResponse, error)
-	Use(name string) DatabaseService
-	Replicate(req ReplicationRequest) (*ReplicationResponse, error)
-	Request(method, uri string, data io.Reader, contentType string) (*http.Response, error)
-	Parse(dirname string) ([]DesignDocument, error)
-}
-
 // Client holds all info for database client
 type Client struct {
 	Username  string
@@ -43,7 +23,7 @@ type Client struct {
 }
 
 // NewClient returns new couchdb client for given url
-func NewClient(u *url.URL) (ClientService, error) {
+func NewClient(u *url.URL) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
@@ -58,7 +38,7 @@ func NewClient(u *url.URL) (ClientService, error) {
 }
 
 // NewAuthClient returns new couchdb client with basic authentication
-func NewAuthClient(username, password string, u *url.URL) (ClientService, error) {
+func NewAuthClient(username, password string, u *url.URL) (*Client, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
