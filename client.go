@@ -201,7 +201,7 @@ func (c *Client) DeleteSession() (*DatabaseResponse, error) {
 // Use database.
 func (c *Client) Use(name string) DatabaseService {
 	return &Database{
-		Name:   name + "/",
+		Name:   name,
 		Client: c,
 	}
 }
