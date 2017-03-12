@@ -17,6 +17,14 @@ import (
 
 var client *Client
 
+const (
+	// The folllowing characters are valid in databse names: /_$()-+
+	// However there is a known bug in couchdb with + (skipping + for testing)
+	// https://issues.apache.org/jira/browse/COUCHDB-1580
+	validSpecialCharacter = "/_$()-/"
+	invalidCharacters     = "."
+)
+
 func TestMain(m *testing.M) {
 	u, err := url.Parse("http://127.0.0.1:5984/")
 	if err != nil {
@@ -93,6 +101,37 @@ func TestCreate(t *testing.T) {
 	if _, err := client.Delete(name); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestCreateWithSpecialCharacters(t *testing.T) {
+	name, err := RandDBName(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	name = name + validSpecialCharacter + name
+	status, err := client.Create(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !status.Ok {
+		t.Errorf("expected ok to be true got false")
+	}
+	if _, err := client.Delete(name); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestCreateFailWithInvalidCharacters(t *testing.T) {
+	name, err := RandDBName(5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	name = name + invalidCharacters + name
+	_, err = client.Create(name)
+	if err == nil {
+		t.Errorf("Database created with invalid characters")
+	}
+
 }
 
 func TestCreateFail(t *testing.T) {
@@ -589,7 +628,7 @@ func TestDocumentPost(t *testing.T) {
 	// use database
 	doc := &DummyDocument{
 		Document: Document{
-			ID: "testid",
+			ID: "test" + validSpecialCharacter + "id",
 		},
 	}
 	if doc.Rev != "" {
