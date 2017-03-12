@@ -84,7 +84,7 @@ func (db *Database) AllDocs(params *QueryParameters) (*ViewResponse, error) {
 
 // Head request.
 func (db *Database) Head(id string) (*http.Response, error) {
-	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(id)
+	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(id))
 	body, err := db.Client.Request(http.MethodHead, u, nil, "")
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (db *Database) Head(id string) (*http.Response, error) {
 
 // Get document.
 func (db *Database) Get(doc CouchDoc, id string) error {
-	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(id)
+	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(id))
 	res, err := db.Client.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (db *Database) Get(doc CouchDoc, id string) error {
 
 // Put document.
 func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
-	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(doc.GetID())
+	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(doc.GetID()))
 	var b bytes.Buffer
 	if err := json.NewEncoder(&b).Encode(doc); err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse, error) {
 
 	// target url
-	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(doc.GetID())
+	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(doc.GetID()))
 
 	// get file from disk
 	file, err := os.Open(path)
@@ -221,7 +221,7 @@ func (db *Database) Bulk(docs []CouchDoc) ([]DocumentResponse, error) {
 
 // View returns view for given name.
 func (db *Database) View(name string) ViewService {
-	u := fmt.Sprintf("%s/_design/%s/", url.PathEscape(db.Name), url.PathEscape(name)
+	u := fmt.Sprintf("%s/_design/%s/", url.PathEscape(db.Name), url.PathEscape(name))
 	return &View{
 		URL:    u,
 		Client: db.Client,
