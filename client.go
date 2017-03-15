@@ -89,7 +89,7 @@ func (c *Client) All() ([]string, error) {
 
 // Get database.
 func (c *Client) Get(name string) (*DatabaseInfo, error) {
-	u := name
+	u := url.PathEscape(name)
 	res, err := c.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (c *Client) Get(name string) (*DatabaseInfo, error) {
 
 // Create database.
 func (c *Client) Create(name string) (*DatabaseResponse, error) {
-	u := name
+	u := url.PathEscape(name)
 	res, err := c.Request(http.MethodPut, u, nil, "application/json")
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (c *Client) Create(name string) (*DatabaseResponse, error) {
 
 // Delete database.
 func (c *Client) Delete(name string) (*DatabaseResponse, error) {
-	u := name
+	u := url.PathEscape(name)
 	res, err := c.Request(http.MethodDelete, u, nil, "application/json")
 	if err != nil {
 		return nil, err
@@ -201,7 +201,7 @@ func (c *Client) DeleteSession() (*DatabaseResponse, error) {
 // Use database.
 func (c *Client) Use(name string) DatabaseService {
 	return &Database{
-		Name:   name + "/",
+		Name:   name,
 		Client: c,
 	}
 }

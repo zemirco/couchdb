@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"reflect"
 	"strings"
@@ -71,7 +72,7 @@ func (db *Database) AllDocs(params *QueryParameters) (*ViewResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	u := fmt.Sprintf("%s_all_docs?%s", db.Name, q.Encode())
+	u := fmt.Sprintf("%s/_all_docs?%s", url.PathEscape(db.Name), q.Encode())
 	res, err := db.Client.Request(http.MethodGet, u, nil, "")
 	if err != nil {
 		return nil, err
@@ -83,7 +84,7 @@ func (db *Database) AllDocs(params *QueryParameters) (*ViewResponse, error) {
 
 // Head request.
 func (db *Database) Head(id string) (*http.Response, error) {
-	u := fmt.Sprintf("%s%s", db.Name, id)
+	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(id))
 	body, err := db.Client.Request(http.MethodHead, u, nil, "")
 	if err != nil {
 		return nil, err
@@ -93,7 +94,7 @@ func (db *Database) Head(id string) (*http.Response, error) {
 
 // Get document.
 func (db *Database) Get(doc CouchDoc, id string) error {
-	u := fmt.Sprintf("%s%s", db.Name, id)
+	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(id))
 	res, err := db.Client.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return err
@@ -104,7 +105,7 @@ func (db *Database) Get(doc CouchDoc, id string) error {
 
 // Put document.
 func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
-	u := fmt.Sprintf("%s%s", db.Name, doc.GetID())
+	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(doc.GetID()))
 	var b bytes.Buffer
 	if err := json.NewEncoder(&b).Encode(doc); err != nil {
 		return nil, err
@@ -124,7 +125,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 	if err := json.NewEncoder(&b).Encode(doc); err != nil {
 		return nil, err
 	}
-	res, err := db.Client.Request(http.MethodPost, db.Name, &b, "application/json")
+	res, err := db.Client.Request(http.MethodPost, url.PathEscape(db.Name), &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +136,7 @@ func (db *Database) Post(doc CouchDoc) (*DocumentResponse, error) {
 
 // Delete document.
 func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
-	u := fmt.Sprintf("%s%s?rev=%s", db.Name, doc.GetID(), doc.GetRev())
+	u := fmt.Sprintf("%s/%s?rev=%s", url.PathEscape(db.Name), url.PathEscape(doc.GetID()), doc.GetRev())
 	res, err := db.Client.Request(http.MethodDelete, u, nil, "application/json")
 	if err != nil {
 		return nil, err
@@ -149,7 +150,7 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 func (db *Database) PutAttachment(doc CouchDoc, path string) (*DocumentResponse, error) {
 
 	// target url
-	u := fmt.Sprintf("%s%s", db.Name, doc.GetID())
+	u := fmt.Sprintf("%s/%s", url.PathEscape(db.Name), url.PathEscape(doc.GetID()))
 
 	// get file from disk
 	file, err := os.Open(path)
@@ -203,7 +204,7 @@ func (db *Database) Bulk(docs []CouchDoc) ([]DocumentResponse, error) {
 	bulk := BulkDoc{
 		Docs: docs,
 	}
-	u := fmt.Sprintf("%s_bulk_docs", db.Name)
+	u := fmt.Sprintf("%s/_bulk_docs", url.PathEscape(db.Name))
 	var b bytes.Buffer
 	if err := json.NewEncoder(&b).Encode(bulk); err != nil {
 		return nil, err
@@ -220,7 +221,7 @@ func (db *Database) Bulk(docs []CouchDoc) ([]DocumentResponse, error) {
 
 // View returns view for given name.
 func (db *Database) View(name string) ViewService {
-	u := fmt.Sprintf("%s_design/%s/", db.Name, name)
+	u := fmt.Sprintf("%s/_design/%s/", url.PathEscape(db.Name), url.PathEscape(name))
 	return &View{
 		URL:    u,
 		Client: db.Client,
@@ -241,7 +242,7 @@ func (db *Database) Purge(req map[string][]string) (*PurgeResponse, error) {
 	if err := json.NewEncoder(&b).Encode(req); err != nil {
 		return nil, err
 	}
-	res, err := db.Client.Request(http.MethodPost, db.Name+"_purge", &b, "application/json")
+	res, err := db.Client.Request(http.MethodPost, url.PathEscape(db.Name)+"/_purge", &b, "application/json")
 	if err != nil {
 		return nil, err
 	}
@@ -265,7 +266,7 @@ type SecurityDocument struct {
 // GetSecurity returns security document.
 // http://docs.couchdb.org/en/latest/api/database/security.html
 func (db *Database) GetSecurity() (*SecurityDocument, error) {
-	u := fmt.Sprintf("%s_security", db.Name)
+	u := fmt.Sprintf("%s/_security", url.PathEscape(db.Name))
 	res, err := db.Client.Request(http.MethodGet, u, nil, "application/json")
 	if err != nil {
 		return nil, err
@@ -278,7 +279,7 @@ func (db *Database) GetSecurity() (*SecurityDocument, error) {
 // PutSecurity sets the security object for the given database.
 // http://docs.couchdb.org/en/latest/api/database/security.html#put--db-_security
 func (db *Database) PutSecurity(secDoc SecurityDocument) (*DatabaseResponse, error) {
-	u := fmt.Sprintf("%s_security", db.Name)
+	u := fmt.Sprintf("%s/_security", url.PathEscape(db.Name))
 	var b bytes.Buffer
 	if err := json.NewEncoder(&b).Encode(secDoc); err != nil {
 		return nil, err
