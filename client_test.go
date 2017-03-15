@@ -414,9 +414,7 @@ func TestReplicationFilter(t *testing.T) {
 	defer func() {
 		// remove both databases
 		for _, d := range []string{dbName, dbName2} {
-			if _, err := client.Delete(d); err != nil {
-				t.Fatal(err)
-			}
+			client.Delete(d)
 		}
 	}()
 	// add some documents to database
@@ -500,9 +498,7 @@ func TestReplicationContinuous(t *testing.T) {
 	defer func() {
 		// remove both databases
 		for _, d := range []string{dbName, dbName2} {
-			if _, err := client.Delete(d); err != nil {
-				t.Fatal(err)
-			}
+			client.Delete(d)
 		}
 	}()
 	// create replication document inside _replicate database
