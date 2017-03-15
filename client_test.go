@@ -18,10 +18,10 @@ import (
 var client *Client
 
 const (
-	// The folllowing characters are valid in databse names: /_$()-+
+	// The following characters are valid in database names: /_$()-+
 	// However there is a known bug in couchdb with + (skipping + for testing)
 	// https://issues.apache.org/jira/browse/COUCHDB-1580
-	validSpecialCharacter = "/_$()-/"
+	validSpecialCharacter = "/_$()-"
 	invalidCharacters     = "."
 )
 
