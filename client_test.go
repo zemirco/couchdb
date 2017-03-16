@@ -411,6 +411,7 @@ func TestReplication(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	// add some documents to database
 	db := client.Use(name)
 	for _, a := range []string{"dog", "mouse", "cat"} {
@@ -435,12 +436,7 @@ func TestReplication(t *testing.T) {
 	if !r.Ok {
 		t.Error("expected ok to be true but got false instead")
 	}
-	// remove both databases
-	for _, d := range []string{name, name2} {
-		if _, err := client.Delete(d); err != nil {
-			t.Fatal(err)
-		}
-	}
+	client.Delete(name2)
 }
 
 func TestReplicationFilter(t *testing.T) {
@@ -450,6 +446,12 @@ func TestReplicationFilter(t *testing.T) {
 	if _, err := client.Create(dbName); err != nil {
 		t.Error(err)
 	}
+	defer func() {
+		// remove both databases
+		for _, d := range []string{dbName, dbName2} {
+			client.Delete(d)
+		}
+	}()
 	// add some documents to database
 	db := client.Use(dbName)
 	docs := []animal{
@@ -516,12 +518,7 @@ func TestReplicationFilter(t *testing.T) {
 	if len(allDocs.Rows) != 2 {
 		t.Errorf("expected exactly two documents but got %d instead", len(allDocs.Rows))
 	}
-	// remove both databases
-	for _, d := range []string{dbName, dbName2} {
-		if _, err := client.Delete(d); err != nil {
-			t.Fatal(err)
-		}
-	}
+
 }
 
 // test continuous replication to test getting replication document
@@ -533,6 +530,12 @@ func TestReplicationContinuous(t *testing.T) {
 	if _, err := client.Create(dbName); err != nil {
 		t.Error(err)
 	}
+	defer func() {
+		// remove both databases
+		for _, d := range []string{dbName, dbName2} {
+			client.Delete(d)
+		}
+	}()
 	// create replication document inside _replicate database
 	req := ReplicationRequest{
 		Document: Document{
@@ -553,12 +556,7 @@ func TestReplicationContinuous(t *testing.T) {
 	if tasks[0].Type != "replication" {
 		t.Errorf("expected type replication but got %s instead", tasks[0].Type)
 	}
-	// remove both databases
-	for _, d := range []string{dbName, dbName2} {
-		if _, err := client.Delete(d); err != nil {
-			t.Fatal(err)
-		}
-	}
+
 }
 
 func TestRequest(t *testing.T) {
@@ -567,6 +565,7 @@ func TestRequest(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Fatal(err)
 	}
+	defer client.Delete(name)
 	// add some documents to database
 	db := client.Use(name)
 	animals := []string{"dog", "mouse", "cat"}
@@ -602,10 +601,6 @@ func TestRequest(t *testing.T) {
 	if _, err := client.Request(http.MethodPut, u, &b, "application/json"); err != nil {
 		t.Fatal(err)
 	}
-	// remove database
-	if _, err := client.Delete(name); err != nil {
-		t.Fatal(err)
-	}
 }
 
 // database tests
@@ -624,6 +619,8 @@ func TestDocumentPost(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
+
 	db := client.Use(name)
 	// use database
 	doc := &DummyDocument{
@@ -641,10 +638,6 @@ func TestDocumentPost(t *testing.T) {
 	if !res.Ok {
 		t.Error("expected ok to be true but got false instead")
 	}
-	// remove database
-	if _, err := client.Delete(name); err != nil {
-		t.Fatal(err)
-	}
 }
 
 func TestDocumentHead(t *testing.T) {
@@ -656,6 +649,7 @@ func TestDocumentHead(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	// create document
 	doc := &DummyDocument{
@@ -685,6 +679,7 @@ func TestDocumentGet(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	// create document
 	doc := &DummyDocument{
@@ -719,6 +714,7 @@ func TestDocumentPut(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	// create document
 	doc := &DummyDocument{
@@ -759,6 +755,7 @@ func TestDocumentDelete(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	// create document
 	doc := &DummyDocument{
@@ -798,6 +795,7 @@ func TestDocumentPutAttachment(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	doc := &DummyDocument{
 		Document: Document{
@@ -829,6 +827,7 @@ func TestUpdateDocumentWithAttachment(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	doc := &DummyDocument{
 		Document: Document{
@@ -868,6 +867,7 @@ func TestDocumentBulkDocs(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	// first dummy document
 	doc1 := &DummyDocument{
@@ -902,6 +902,7 @@ func TestAllDocs(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	// first dummy document
 	doc1 := &DummyDocument{
@@ -940,6 +941,7 @@ func TestPurge(t *testing.T) {
 	if _, err := client.Create(dbName); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(dbName)
 	db := client.Use(dbName)
 	// create documents
 	doc := &DummyDocument{
@@ -970,10 +972,6 @@ func TestPurge(t *testing.T) {
 	if revisions[0] != postResponse.Rev {
 		t.Error("expected purged revision to be the same as posted document revision")
 	}
-	// remove database
-	if _, err := client.Delete(dbName); err != nil {
-		t.Error(err)
-	}
 }
 
 func TestSecurity(t *testing.T) {
@@ -982,6 +980,7 @@ func TestSecurity(t *testing.T) {
 	if _, err := client.Create(dbName); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(dbName)
 	db := client.Use(dbName)
 	// test putting security document first
 	secDoc := SecurityDocument{
@@ -1020,10 +1019,6 @@ func TestSecurity(t *testing.T) {
 	if doc.Members.Names[0] != "member1" {
 		t.Errorf("expected name member1 but got %s instead", doc.Members.Names[0])
 	}
-	// remove database
-	if _, err := client.Delete(dbName); err != nil {
-		t.Error(err)
-	}
 }
 
 // view tests
@@ -1052,6 +1047,7 @@ func TestView(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	// create database
 	design := &DesignDocument{
@@ -1308,10 +1304,6 @@ func TestView(t *testing.T) {
 		}
 	})
 
-	// remove database
-	if _, err := client.Delete(name); err != nil {
-		t.Error(err)
-	}
 }
 
 // mimeType()
@@ -1763,6 +1755,7 @@ func TestSeed(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	db := client.Use(name)
 	docs, err := client.Parse(filepath.Join("example", "design"))
 	if err != nil {
