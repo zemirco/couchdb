@@ -372,6 +372,7 @@ func TestReplication(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(name)
 	// add some documents to database
 	db := client.Use(name)
 	for _, a := range []string{"dog", "mouse", "cat"} {
@@ -396,12 +397,7 @@ func TestReplication(t *testing.T) {
 	if !r.Ok {
 		t.Error("expected ok to be true but got false instead")
 	}
-	// remove both databases
-	for _, d := range []string{name, name2} {
-		if _, err := client.Delete(d); err != nil {
-			t.Fatal(err)
-		}
-	}
+	client.Delete(name2)
 }
 
 func TestReplicationFilter(t *testing.T) {
@@ -530,6 +526,7 @@ func TestRequest(t *testing.T) {
 	if _, err := client.Create(name); err != nil {
 		t.Fatal(err)
 	}
+	defer client.Delete(name)
 	// add some documents to database
 	db := client.Use(name)
 	animals := []string{"dog", "mouse", "cat"}
@@ -563,10 +560,6 @@ func TestRequest(t *testing.T) {
 	}
 	u := fmt.Sprintf("%s/%s", name, doc["_id"])
 	if _, err := client.Request(http.MethodPut, u, &b, "application/json"); err != nil {
-		t.Fatal(err)
-	}
-	// remove database
-	if _, err := client.Delete(name); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -909,6 +902,7 @@ func TestPurge(t *testing.T) {
 	if _, err := client.Create(dbName); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(dbName)
 	db := client.Use(dbName)
 	// create documents
 	doc := &DummyDocument{
@@ -939,10 +933,6 @@ func TestPurge(t *testing.T) {
 	if revisions[0] != postResponse.Rev {
 		t.Error("expected purged revision to be the same as posted document revision")
 	}
-	// remove database
-	if _, err := client.Delete(dbName); err != nil {
-		t.Error(err)
-	}
 }
 
 func TestSecurity(t *testing.T) {
@@ -951,6 +941,7 @@ func TestSecurity(t *testing.T) {
 	if _, err := client.Create(dbName); err != nil {
 		t.Error(err)
 	}
+	defer client.Delete(dbName)
 	db := client.Use(dbName)
 	// test putting security document first
 	secDoc := SecurityDocument{
@@ -988,10 +979,6 @@ func TestSecurity(t *testing.T) {
 	}
 	if doc.Members.Names[0] != "member1" {
 		t.Errorf("expected name member1 but got %s instead", doc.Members.Names[0])
-	}
-	// remove database
-	if _, err := client.Delete(dbName); err != nil {
-		t.Error(err)
 	}
 }
 
