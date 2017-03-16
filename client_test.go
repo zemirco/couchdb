@@ -436,7 +436,9 @@ func TestReplication(t *testing.T) {
 	if !r.Ok {
 		t.Error("expected ok to be true but got false instead")
 	}
-	client.Delete(name2)
+	if _, err := client.Delete(name2); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestReplicationFilter(t *testing.T) {
